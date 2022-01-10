@@ -34,7 +34,7 @@ def sampler(
     dlog10m=0.01,
     n_iter=1000,
     sample_hmf=True,
-    sample_densities=True,
+    sample_overdensities=True,
     sample_sfr=0,  # 0 is for sampling using data from Ceverino+18,
     # 1 is for Tacchella+18,
     # 2 is not sampling but using mean from Ceverino+18,
@@ -48,8 +48,7 @@ def sampler(
     interpolating=True,  # if True
     # interpolate hmf to better sample the mass function
     duty_cycle=True,  # if True turn off duty cycle in the sampler.
-    logger=False,  # just printing stuff
-    sample_ms=True,  # if True, sample metallicity
+    sample_metal=True,  # if True, sample metallicity
 ):
     """Return an array of emissivities for each iteration of the sampler."""
     # let's intiate the halo mass function
@@ -57,7 +56,7 @@ def sampler(
 
     # if not sample densities, no need to calculate hmf every time
 
-    if (sample_sfr == 0 or sample_sfr == 2) and sample_ms:  # initiate SFR data
+    if (sample_sfr == 0 or sample_sfr == 2) and sample_metal:  # initiate SFR
         (
             means_ms_rel,
             sigma_ms_rel,
@@ -68,15 +67,15 @@ def sampler(
             a_sfr_rel,
             b_sfr_rel,
         ) = sfrvsmh(z)
-    elif (sample_sfr == 0 or sample_sfr == 2) and not sample_ms:
+    elif (sample_sfr == 0 or sample_sfr == 2) and not sample_metal:
         (
             means_ms_rel,
             sigma_ms_rel,
             a_ms_rel,
             b_ms_rel,
-        ) = sfrvsmh(z, sample_ms=False)
+        ) = sfrvsmh(z, sample_metal=False)
 
-    if sample_densities:
+    if sample_overdensities:
         hmf_this = hmf.MassFunction(
             z=z,
             Mmin=log10_mass_min,
@@ -120,7 +119,7 @@ def sampler(
         delta_nonlin = np.linspace(-0.99, 10)
         delta_lin_values = nonlin(delta_nonlin)
 
-    if not sample_densities:
+    if not sample_overdensities:
         if delta_bias == 0.0:
             # calculate mass_bin resolution
             hmf_this = hmf.MassFunction(
@@ -154,8 +153,14 @@ def sampler(
                     break
             masses = masses[:index_to_stop]
             mass_func = mass_func[:index_to_stop]
-            n_mean_cumsum = integrate_hmf.hmf_integral_gtm(
-                masses[:index_to_stop], mass_func[:index_to_stop]
+            n_mean_cumsum = (
+                integrate_hmf.hmf_integral_gtm(
+                    masses[:index_to_stop], mass_func[:index_to_stop]
+                )
+                * 4
+                / 3
+                * np.pi
+                * r_bias ** 3
             )
 
         n_mean = int((n_mean_cumsum)[0])
@@ -164,7 +169,7 @@ def sampler(
 
     for i in range(n_iter):
 
-        if sample_densities:
+        if sample_overdensities:
             delta_bias = delta_list[i]
             delta_bias = np.interp(delta_bias, delta_lin_values, delta_nonlin)
             delta_bias /= hmf_this.dicke()
@@ -241,7 +246,7 @@ def sampler(
         lx = np.zeros(shape=n_this_iter)
 
         sfr_samples = np.zeros(shape=n_this_iter)
-        if sample_ms:
+        if sample_metal:
             ms_samples = np.zeros(shape=n_this_iter)
             z_samples = np.zeros(shape=n_this_iter)
 
@@ -251,7 +256,7 @@ def sampler(
                 means_ms_rel, sigma_ms_rel, a_ms_rel, b_ms_rel, mass
             )  # need to fix this as it does smth weird
 
-            if sample_sfr == 0 and sample_ms:
+            if sample_sfr == 0 and sample_metal:
                 ms_s = 10 ** (
                     normal(
                         (a_ms_rel * np.log10(mass) + b_ms_rel),
@@ -282,7 +287,7 @@ def sampler(
                 sfr_v = 1.67 * np.log10(ms_s) - 15.365 - 1.67 * np.log10(0.15)
                 sfr_s = 10 ** (normal(sfr_v, 0.2))
 
-            elif sample_sfr == 2 and sample_ms:
+            elif sample_sfr == 2 and sample_metal:
                 ms_s = 10 ** (a_ms_rel * np.log10(mass) + b_ms_rel)
                 a_sfr, b_sfr, sigma_sfr = give_me_sigma(
                     means_sfr_rel,
@@ -299,17 +304,17 @@ def sampler(
                 log_sfr_s = log_sfr_s - 15.365 - 1.67 * np.log(0.15)
                 sfr_s = 10 ** log_sfr_s
 
-            elif sample_sfr == 0 and not sample_ms:
+            elif sample_sfr == 0 and not sample_metal:
                 sfr_s = 10 ** (
                     normal(
                         (a_ms_rel * np.log10(mass) + b_ms_rel),
                         sigma_ms_rel,
                     )
                 )
-            elif sample_sfr == 2 and not sample_ms:
+            elif sample_sfr == 2 and not sample_metal:
                 sfr_s = 10 ** (a_ms_rel * np.log10(mass) + b_ms_rel)
 
-            if sample_lx == 0 and sample_ms:
+            if sample_lx == 0 and sample_metal:
                 if sample_sfr == 0 or sample_sfr == 1:
                     pass
                 else:
@@ -325,7 +330,7 @@ def sampler(
             elif sample_lx == 1:
                 lx_sample = 10 ** normal((0.8 * np.log10(sfr_s) + 39.40), 0.9)
 
-            elif sample_lx == 2 and sample_ms:
+            elif sample_lx == 2 and sample_metal:
                 if sample_sfr == 2:
                     pass
                 else:
@@ -344,19 +349,19 @@ def sampler(
             elif sample_lx == 3:
                 lx_sample = 10 ** (0.8 * np.log10(sfr_s) + 39.40)
 
-            elif sample_lx == 0 and not sample_ms:
+            elif sample_lx == 0 and not sample_metal:
                 loglx_over_sfr, logsigma_lx_over_sfr = give_me_lx(sfr_s)
                 lx_sample = 10 ** normal(
                     loglx_over_sfr + np.log10(sfr_s), logsigma_lx_over_sfr
                 )
 
-            elif sample_lx == 2 and not sample_ms:
+            elif sample_lx == 2 and not sample_metal:
                 loglx_over_sfr, logsigma_lx_over_sfr = give_me_lx(sfr_s)
                 lx_sample = 10 ** (loglx_over_sfr + np.log10(sfr_s))
 
             lx[j] = lx_sample
             sfr_samples[j] = sfr_s
-            if sample_ms:
+            if sample_metal:
                 ms_samples[j] = ms_s
                 z_samples[j] = z_s
 
@@ -731,7 +736,7 @@ class Chmf:
         return self.cummass
 
 
-def sfrvsmh(z, sample_ms=True):
+def sfrvsmh(z, sample_metal=True):
     """Return various sfr, stellar mass and halo mass relations."""
     ff = open('FirstLight_database.dat')
     database = json.load(ff)
@@ -1096,7 +1101,7 @@ def sfrvsmh(z, sample_ms=True):
     zipped = zip(mh_uniq_list, sfr_uniq_list, ms_uniq_list)
     zipped = sorted(zipped)
     mh_uniq_sorted, sfr_uniq_sorted, ms_uniq_sorted = zip(*zipped)
-    if sample_ms:
+    if sample_metal:
         log10_mh = np.log10(mh_uniq_sorted)
         log10_ms = np.log10(ms_uniq_sorted)
         a_ms, b_ms = np.polyfit(log10_mh, log10_ms, 1)
