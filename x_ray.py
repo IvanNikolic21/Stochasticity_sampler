@@ -16,7 +16,16 @@ from scipy.interpolate import InterpolatedUnivariateSpline as Spline
 
 
 def nonlin(x):
-    """Non-linear transform from Eulerian to Lagrangian overdensity."""
+    """Non-linear transform from Lagrangian to Eulerian overdensity.
+
+    Function returns the Lagrangian to Eulerian overdensity transformation.
+    Based on Trapp & Furlanetto+20, Appendix A.
+
+    Parameters
+    ----------
+    x : float,
+        The true overdensity
+    """
     return (
         -1.35 * (1 + x) ** (-2 / 3)
         + 0.78785 * (1 + x) ** (-0.58661)
@@ -50,7 +59,56 @@ def sampler(
     duty_cycle=True,  # if True turn off duty cycle in the sampler.
     sample_metal=True,  # if True, sample metallicity
 ):
-    """Return an array of emissivities for each iteration of the sampler."""
+    """High-redshift x-ray emissivity stochasticity sampler.
+
+    Function returns a list of the emissivities, as well as some other data.
+
+    Parameters:
+    -----------
+    z : float, optional
+        Redshift at which the sampler is evaluated.
+    delta_bias : float, optional
+        Mean overdensity of cell.
+        Only necessary when sample_overdensities = False.
+    r_bias : float, optional
+        Biasing region, i.e. the cell radius.
+    log_10_mass_min : float, optional
+        Minimal mass of the halos to be sampled.
+        Should be somewhat smaller than m_turn if duty_cycle = True·
+    log_10_mass_max : float, optional
+        Maximum mass of the halos to be sampled.
+    dlog10m : float, optional
+        Logarithmic interval between halo masses.
+    n_iter : integer, optional
+        Number of iterations of the sampler.
+    sample_hmf : boolean, optional
+        If True, halo mass function is sampled.
+        Recommended since this is an important source of stochasticity.
+    sample_overdensities : boolean, optional
+        If True, ovrdensity of a cell is sampled for each iteration.
+        If False, all cells have a mean overdensity given by delta_bias.
+    sample_sfr : boolean, optional
+        If 0, SFR is sampled for each halo using Ceverino+18.
+        If 1, SFR is sampled for each halo using Tacchella+18.
+        If 2, SFR is set using the mean relation from Ceverino+18.
+        If 3, SFR is set using the mean relation from Tacchella+18.
+    sample_lx : boolean, optional
+        If 0, lx is sampled using Lehmer+20.
+        If 1, lx is sampled using Kouroumpatzakis+20.
+        If 2, lx is set using the mean relation from Lehmer+20.
+        If 3, lx is set using the mean relation from Kouroumpatzakis+20.
+    calculate_2pcc : boolean, optional
+        Calculate the non-Poission stochasticity correction.
+        Minor effect for scales > 5Mpc of interest.
+    interpolating : boolean, optional
+        If True, interpolate the hmf for each iteration.
+        Should be set True as it is the best option.
+    duty_cycle : boolean, optional
+        If True, duty cycle suppresion is used.
+        Doesn't impact the final result, but speeds up the calculation.
+    sample_metal : boolean, optional
+        If True, metallicitiy is sampled from Curti+19.
+    """
     # let's intiate the halo mass function
     m_turn = 5 * 10 ** 8  # Park+19 parametrization
 
@@ -378,7 +436,16 @@ def sampler(
 
 
 def rtom(r):
-    """Conversion from Radius to Mass."""
+    """
+    Conversion from Radius to Mass.
+
+    Function returns mass inside a sphere of radius r with average density.
+
+    Parameters:
+    -----------
+    r : float
+        Radius of the sphere in Mpc.
+    """
     cmpermpc3 = 3.086e24 ** 3
     msun = 1.989e33
     critical_density = Cosmo.critical_density0.value * cmpermpc3 / msun
@@ -386,7 +453,28 @@ def rtom(r):
 
 
 class Chmf:
-    """Class that contains everyhing hmf related."""
+    """
+    Class that contains everyhing hmf related.
+
+    Class calculates the halo mass function and all related quantities.
+    It is optimized to calculate many hmf's with varying mean overdensities.
+    It is done by calling the prep_for_hmf function of the class
+    and then running run_hmf everytime you need a hmf directly.
+    Additional functions include cumulative number which calculates cumulative
+    number of halos as a function of mass
+
+    Attributes:
+    -----------
+    z : float
+        Redshift at which all computation is done.
+    delta_bias : float
+        Mean overdensity of the cell.
+        Even though it is not needed, it still has to be specified.
+        This should become an optional parameter soon.
+    r_bias:
+        Radius of a cell for which the halo mass function
+        quantities are calculated.
+    """
 
     def z_drag_calculate(self):
         """Calculate z_drag."""
@@ -608,7 +696,20 @@ class Chmf:
         )
 
     def prep_for_hmf(self, log10_mass_min=6, log10_mass_max=15, dlog10m=0.01):
-        """Do everything needed for hmf."""
+        """Do everything needed for hmf.
+
+        Function is called at the beginning of the calculation to prepare
+        everything for hmf calculation.
+
+        Parameters:
+        -----------
+        log10_mass_min : float
+            Minimum mass for which the halo mass function is calculated.
+        log10_mass_max : float
+            Maximum mass for which the halo mass function is calculated.
+        dlog10m : float
+            Logarithmic interval between masses for hmf calculation.
+        """
         self.log10_mass_min = log10_mass_min
         self.log10_mass_max = log10_mass_max
         self.dlog10m = dlog10m
@@ -622,7 +723,18 @@ class Chmf:
             self.sigma_derivatives[index] = self.dsigmasqdm_z0(mass)
 
     def run_hmf(self, delta_bias):
-        """Run one instance of hmf."""
+        """
+        Run one instance of hmf.
+
+        Main function to call after prep_for_hmf is alrady called.
+        Function returns a list of mass bins and halo mass function for
+        those bins.
+
+        Parameters:
+        -----------
+        delta_bias : float
+            Mean overdensity of the cell for this instance of hmf.
+        """
         delta = self.Deltac / self.dicke() - delta_bias
         sigma_array = self.sigma_z0_array ** 2 - self.sigma_cell() ** 2
         self.hmf = np.zeros(len(self.bins))
@@ -677,7 +789,11 @@ class Chmf:
         return (self.bins_normal, self.hmf_normal)
 
     def cumulative_number(self):
-        """Cumulative number of halos."""
+        """
+        Cumulative number of halos.
+
+        Function returns a cumulative number of halos (cumulated backwards).
+        """
         dndlnm = self.bins * self.hmf
         if self.bins[-1] < self.bins[0] * 10 ** 18 / self.bins[3]:
             m_upper = np.arange(
@@ -737,7 +853,27 @@ class Chmf:
 
 
 def sfrvsmh(z, sample_metal=True):
-    """Return various sfr, stellar mass and halo mass relations."""
+    """
+    Return various sfr, stellar mass and halo mass relations.
+
+    Function opens the FirstLight_database.dat file and outputs relation
+    between sfr and ms and ms versus mh,or sfr vs mh if
+    sample_metal = False.
+
+    Parameters:
+    -----------
+    z : float
+        Redshift at which the relations are calculated.
+        Since the database has only a certain number of redshifts provided,
+        relation is taken for the closest redshift in the database.
+    sample_metal : float, optional
+        If True, Ms vs Mh relation parameres (means_ms, err_ms, a_ms, b_ms)
+        are outputted (a linear relation with mean and error also provided)
+        along with the same parameters for SFR vs Ms relation (means_sfr,
+        err_sfr, a_sfr, b_sfr)
+        If False, only SFR vs Mh is given.
+        Name of parameters is so to be in accord with the main function.
+    """
     ff = open('FirstLight_database.dat')
     database = json.load(ff)
     ff.close()
@@ -1209,7 +1345,11 @@ def sfrvsmh(z, sample_metal=True):
 
 
 def give_me_sigma(mass, means, errs, a, b):
-    """Return only stuff that's needed."""
+    """
+    Return only stuff that's needed.
+
+    This function is buggy and shouldn't be used right now.
+    """
     if len(means) == 1:
         return a, b, errs
     else:
@@ -1218,7 +1358,21 @@ def give_me_sigma(mass, means, errs, a, b):
 
 
 def give_me_lx(sfr_data, z_sample=None):
-    """Return Lx over SFR relation, with optional metallicity."""
+    """
+    Return Lx over SFR relation, with optional metallicity.
+
+    Function takes data from Table 3. from Lehmer+20 and returns
+    Lx/SFR vs SFR relation.
+
+    Parameters:
+    -----------
+    sfr_data : float, optional
+        SFR at which the relation is evaluated
+    z_sample : float, optional
+        If provided, calculates the relation for that metallicity
+        If not provided, calculates the mean relation with
+        metallicity error marginalized.
+    """
     if z_sample:
         indices = [7.0, 7.2, 7.4, 7.6, 7.8, 8.0, 8.2, 8.4, 8.6, 8.8, 9.0, 9.2]
 
@@ -1474,7 +1628,16 @@ def bias_func(m, hmf_class):  # this supposes that the hmf class was initiated
 def delta_scc(
     hmf_class,
 ):
-    """Return delta factor needed."""
+    """
+    Return delta factor needed.
+
+    Function returns the super Poisson correction factor from Ahn+15.
+
+    Parameters:
+    -----------
+    hmf_class:
+        Initiated and ran hmf class chmf.
+    """
     bias_integral = integrate.quad(
         bias_func,
         10 ** hmf_class.log10_mass_min,
@@ -1495,9 +1658,14 @@ def metalicity_from_fmr(m_star, sfr):
     """
     Metalicity from Curti+19.
 
-    -----
+    Function takes the Ms and SFR to calculate the metallicity 12+log(O/H)
 
-    Function takes in stellar mass and SFR, outputs the metallicity 12+log(O/H)
+    Parameters:
+    -----------
+    m_star : float
+        Stellar mass at which the FMR is calculated
+    sfr : float
+        SFR at which the FMR is calculated.
     """
     sigma_met = 0.054  # value they qoute for the sigma_FMR
     z_0 = 8.779
