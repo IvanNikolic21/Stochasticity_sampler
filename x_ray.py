@@ -109,7 +109,6 @@ def sampler(
     sample_metal : boolean, optional
         If True, metallicitiy is sampled from Curti+19.
     """
-    # let's intiate the halo mass function
     m_turn = 5 * 10 ** 8  # Park+19 parametrization
 
     # if not sample densities, no need to calculate hmf every time
@@ -141,31 +140,31 @@ def sampler(
             dlog10m=dlog10m,
             conditional_mass=rtom(r_bias),
         )  # just a quick one to calculate
-
+        g_f = hmf_this.growth_factor
         # intialize samples of densities:
-        gauss_lagr = []
+        gauss_lagr = np.zeros(100000)
         delta_lag = np.linspace(-7, 15, 100000)
-        delta_other = nonlin(delta_lag * hmf_this.growth_f) / hmf_this.growth_f
+        delta_eul = nonlin(delta_lag * g_f) / g_f
         sigma_non_nan = hmf_this.sigma[~np.isnan(hmf_this.sigma)]
         radii_non_nan = hmf_this.radii[~np.isnan(hmf_this.sigma)]
-        for index, i in enumerate(delta_other):
-            mult_f = (1 + delta_lag[index] * hmf_this.growth_f) ** (1 / 3.0)
+        for index, i in enumerate(delta_eul):
+            mult_f = (1 + delta_lag[index] * g_f) ** (1 / 3.0)
             sigma = (
                 np.interp(
                     r_bias * mult_f * radii_non_nan / Cosmo.h,
                     sigma_non_nan,
                 )
-                / hmf_this.growth_f
+                / g_f
             )
             exp_f = np.exp(-((i) ** 2) / 2 / (sigma) ** 2)
-            gauss_lagr.append(1 / np.sqrt(2 * np.pi) / sigma * exp_f)
-        n_mean_cumsum = integrate.cumtrapz(gauss_lagr, delta_other)
-        cumsum = n_mean_cumsum / n_mean_cumsum[-1]
+            gauss_lagr[i] = 1 / np.sqrt(2 * np.pi) / sigma * exp_f
+        cumul_delta = integrate.cumtrapz(gauss_lagr, delta_eul)
+        cum_delta_n = cumul_delta / cumul_delta[-1]
         random_numb = np.random.uniform(size=n_iter)
         delta_list = np.zeros(shape=n_iter)
         for index, random in enumerate(random_numb):
-            delta_list[index] = np.interp(random, cumsum, delta_lag[:-1])
-            delta_list[index] = nonlin(delta_list[index] * hmf_this.growth_f)
+            delta_list[index] = np.interp(random, cum_delta_n, delta_lag[:-1])
+            delta_list[index] = nonlin(delta_list[index] * g_f)
 
         hmf_this = Chmf(z=z, delta_bias=delta_bias, r_bias=r_bias)
         hmf_this.prep_for_hmf(
@@ -177,50 +176,30 @@ def sampler(
         delta_nonlin = np.linspace(-0.99, 10)
         delta_lin_values = nonlin(delta_nonlin)
 
-    if not sample_overdensities:
-        if delta_bias == 0.0:
-            # calculate mass_bin resolution
-            hmf_this = hmf.MassFunction(
-                z=z, Mmin=log10_mass_min, Mmax=log10_mass_max, dlog10m=dlog10m
-            )  # at this redshift, larger mass halos are non-existent
-            mass_func = hmf_this.dndm
-            masses = hmf_this.m
-            n_mean_cumsum = (
-                integrate_hmf.hmf_integral_gtm(masses, mass_func, mass_d=False)
-                * 4
-                / 3
-                * np.pi
-                * r_bias ** 3
+    else:
+        hmf_this = Chmf(
+            z=z, delta_bias=delta_bias, r_bias=r_bias
+        )  # TODO fix this still, it's in my to do list.
+        hmf_this.prep_for_hmf(
+            log10_mass_min=log10_mass_min,
+            log10_mass_maix=log10_mass_max,
+            dlog10m=dlog10m,
+        )
+        masses, mass_func = hmf_this.run_hmf(delta_bias)
+        for index_to_stop, mass_func_element in enumerate(mass_func):
+            if mass_func_element == 0:
+                break
+        masses = masses[:index_to_stop]
+        mass_func = mass_func[:index_to_stop]
+        n_mean_cumsum = (
+            integrate_hmf.hmf_integral_gtm(
+                masses[:index_to_stop], mass_func[:index_to_stop]
             )
-            cumulative_mass = integrate_hmf.hmf_integral_gtm(
-                masses, mass_func, mass_d=True
-            )
-
-        else:
-            hmf_this = Chmf(
-                z=z, delta_bias=delta_bias, r_bias=r_bias
-            )  # TODO fix this still, it's in my to do list.
-            hmf_this.prep_for_hmf(
-                log10_mass_min=log10_mass_min,
-                log10_mass_max=log10_mass_max,
-                dlog10m=dlog10m,
-            )
-            masses, mass_func = hmf_this.run_hmf(delta_bias)
-            for index_to_stop, mass_func_element in enumerate(mass_func):
-                if mass_func_element == 0:
-                    break
-            masses = masses[:index_to_stop]
-            mass_func = mass_func[:index_to_stop]
-            n_mean_cumsum = (
-                integrate_hmf.hmf_integral_gtm(
-                    masses[:index_to_stop], mass_func[:index_to_stop]
-                )
-                * 4
-                / 3
-                * np.pi
-                * r_bias ** 3
-            )
-
+            * 4
+            / 3
+            * np.pi
+            * r_bias ** 3
+        )
         n_mean = int((n_mean_cumsum)[0])
     n_cumsum_normalized = n_mean_cumsum / n_mean_cumsum[0]
     emissivities = np.zeros(shape=n_iter)
@@ -290,7 +269,7 @@ def sampler(
                 )
         else:
             for index, rn in enumerate(random_numbers):
-                for k, cum_mass in enumerate(cumulative_mass):
+                for k, cum_mass in enumerate(n_cumsum_normalized):
                     if cum_mass > rn:
                         masses_of_haloes[index] = masses[k]
                         break
