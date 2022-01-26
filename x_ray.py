@@ -44,20 +44,12 @@ def sampler(
     n_iter=1000,
     sample_hmf=True,
     sample_overdensities=True,
-    sample_sfr=0,  # 0 is for sampling using data from Ceverino+18,
-    # 1 is for Tacchella+18,
-    # 2 is not sampling but using mean from Ceverino+18,
-    # 3 is for mean from Tacchella
-    sample_lx=0,  # 0 is for sampling using data from Lehmer+20,
-    # 1 is from Kouroumpatzakis+20
-    # 2 is not sampling but using mean from Lehmer+20,
-    # 3 is for mean from Kouroumpatzakis+20
-    calculate_2pcc=False,  # if True
-    # calculate 2point-correlation Poission correction
-    interpolating=True,  # if True
-    # interpolate hmf to better sample the mass function
-    duty_cycle=True,  # if True turn off duty cycle in the sampler.
-    sample_metal=True,  # if True, sample metallicity
+    sample_sfr=0,
+    sample_lx=0,
+    calculate_2pcc=False,
+    interpolating=True,
+    duty_cycle=True,
+    sample_metal=True,
 ):
     """High-redshift x-ray emissivity stochasticity sampler.
 
@@ -289,10 +281,6 @@ def sampler(
 
         for j, mass in enumerate(masses_saved):
 
-            a_ms, b_ms, sigma_ms = give_me_sigma(
-                means_ms_rel, sigma_ms_rel, a_ms_rel, b_ms_rel, mass
-            )  # need to fix this as it does smth weird
-
             if sample_sfr == 0 and sample_metal:
                 ms_s = 10 ** (
                     normal(
@@ -300,13 +288,7 @@ def sampler(
                         sigma_ms_rel,
                     )
                 )
-                a_sfr, b_sfr, sigma_sfr = give_me_sigma(
-                    means_sfr_rel,
-                    sigma_sfr_rel,
-                    a_sfr_rel,
-                    b_sfr_rel,
-                    ms_s,
-                )
+
                 sfr_s = 10 ** (
                     normal(
                         (a_sfr_rel * np.log10(ms_s) + b_sfr_rel),
@@ -326,13 +308,7 @@ def sampler(
 
             elif sample_sfr == 2 and sample_metal:
                 ms_s = 10 ** (a_ms_rel * np.log10(mass) + b_ms_rel)
-                a_sfr, b_sfr, sigma_sfr = give_me_sigma(
-                    means_sfr_rel,
-                    sigma_sfr_rel,
-                    a_sfr_rel,
-                    b_sfr_rel,
-                    ms_s,
-                )
+
                 sfr_s = 10 ** (a_sfr_rel * np.log10(ms_s) + b_sfr_rel)
 
             elif sample_sfr == 3:
@@ -1321,19 +1297,6 @@ def sfrvsmh(z, sample_metal=True):
         means_ms = np.sqrt(means_ms / number_of_masses)
 
         return (means_ms, err_ms, a_ms, b_ms)
-
-
-def give_me_sigma(mass, means, errs, a, b):
-    """
-    Return only stuff that's needed.
-
-    This function is buggy and shouldn't be used right now.
-    """
-    if len(means) == 1:
-        return a, b, errs
-    else:
-        i = np.interp(np.log10(mass), np.log10(means), np.sqrt(np.array(errs)))
-        return a, b, i
 
 
 def give_me_lx(sfr_data, z_sample=None):
