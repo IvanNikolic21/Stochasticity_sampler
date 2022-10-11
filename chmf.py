@@ -8,6 +8,7 @@ import os
 from joblib import Parallel, delayed
 import scipy
 import scipy.interpolate
+from scipy.special import erfc
 
 class chmf:
     def z_drag_calculate(self):
@@ -367,6 +368,16 @@ class chmf:
     def f_coll_st(self,M):
         f_coll_st = integrate.quad (self.dfdM_st, np.log(M), np.log(10**19), limit=1000, epsabs=10**-10)
         return f_coll_st[0] / (cosmo.Om0*self.critical_density)
+    
+    def mass_coll_grt_ST(delta_bias):
+        """
+            Modified collapsed fraction to be in line with the modified hmf.
+        """
+        fraction =  self.f_coll_ST(10**self.log10_Mmin) / self.f_coll_calc()
+        s = np.sqrt(2 * self.(self.sigma_z0_array[0]**2 - self.sigma_cell()**2))
+        er_f = erfc ((self.Deltac/self.dicke() - delta_bias)/ s)
+        return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density
+    
     def prep_collapsed_fractions(self, check_cache=True):
         if check_cache and os.path.exists('/home/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m, self.delta_bias)):
             self.derivative_ratios = np.load('/home/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m, self.delta_bias))

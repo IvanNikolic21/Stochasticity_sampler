@@ -58,8 +58,11 @@ def Sampler_ALL(emissivities_x_list,
                                        R_bias)
         time_inter = time.time()
         print("Actual smapling of densities took,", time_inter-time_2)
+
         hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = R_bias)
-        hmf_this.prep_for_hmf(log10_Mmin, log10_Mmax, dlog10m )
+        hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
+        hmf_this.prep_collapsed_fractions()
+
         time_inter2 = time.time()
         print("First chmf part took", time_inter2 - time_inter)
 
@@ -112,14 +115,14 @@ def Sampler_ALL(emissivities_x_list,
             delta_bias = np.interp(delta_bias, delta_lin_values, delta_nonlin)
             delta_bias /= hmf_this.dicke()
 
-            masses, mass_func = hmf_this.run_hmf(delta_bias)
+            masses, mass_func = hmf_this.ST_hmf(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
                 if mass_func_element==0:
                     break
             masses=masses[:index_to_stop]
             mass_func=mass_func[:index_to_stop]
-            mass_coll = hmf_this.mass_coll_grt()
+            mass_coll = hmf_this.mass_coll_grt_ST(delta_list[i])
 
             N_mean_cs = ig_hmf.hmf_integral_gtm(masses, 
                                                 mass_func) * V_bias
