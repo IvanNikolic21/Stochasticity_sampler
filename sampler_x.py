@@ -2,10 +2,12 @@
 
 from lx import LxvsSFR_lin
 from chmf import chmf
-from helpers import RtoM, nonlin, metalicity_from_FMR
-from common_stuff import _sample_densities, _sample_halos, sfr_ms_mh_21cmmc, Brorby_lx, Zahid_metal
+from helpers import RtoM, nonlin
+from common_stuff import _sample_densities, _sample_halos
 from sfr import SFRvsMh_lin
-
+from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant, sigma_SFR_constant
+from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
+from scaling import sigma_Lx_const, ms_mh_21cmmc
 import random
 import math
 import time

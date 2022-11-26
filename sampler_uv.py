@@ -4,8 +4,11 @@ import math
 from hmf import integrate_hmf as ig_hmf
 from sfr import SFRvsMh_lin
 import time
+from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant, sigma_SFR_constant
+from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
+from scaling import sigma_Lx_const, ms_mh_21cmmc
 from chmf import chmf
-from helpers import RtoM, nonlin, metalicity_from_FMR
+from helpers import RtoM, nonlin
 from common_stuff import _sample_halos, _sample_densities
 from bpass_read import bpass_loader
 import numpy as np

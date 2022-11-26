@@ -23,7 +23,7 @@ from sampler_uv import Sampler_UV
 from sampler_lw import Sampler_LW
 from sampler_all import Sampler_ALL
 from bpass_read import bpass_loader
-
+import os
 import time
 import sys
 import numpy as np
@@ -37,17 +37,18 @@ if __name__=='__main__':
     dlog10m = float(sys.argv[5])
     N_iter = int(sys.argv[6])
     n_processes = int(sys.argv[7])
-
-    sample_SFR = int(sys.argv[8])
-    sample_emiss = int(sys.argv[9])
-    sample_Poiss = str(sys.argv[10])
-    
+    #assert wavelength==10, f"Whoops"
+    sample_SFR = bool(str(sys.argv[8]))
+    sample_emiss = bool(str(sys.argv[9]))
+    sample_Poiss = bool(str(sys.argv[10]))
+    #assert False, f"start now!"
     time_ini = time.time()
     if wavelength == 'UV' or wavelength =='X' or wavelength == 'all':
+        start = time.time()
         bpass_read = bpass_loader(parallel = n_processes)
     time_out = time.time()
-    #print("bpass reading now", time_out-time_ini)
-    
+    print("bpass reading now", time_out-time_ini)
+    #assert bpass_read==0, f"running now!"    
     if wavelength!= 'all':
         emissivities_redshift = []
     else:
@@ -104,7 +105,7 @@ if __name__=='__main__':
                                         'sample_LW':sample_emiss,
                                         'bpass_read': bpass_read})
                 elif wavelength == 'all':
-                    p = Process(target = Sample_all,
+                    p = Process(target = Sampler_ALL,
                                kwargs={'emissivities_x_list': emissivities_x,
                                       'emissivities_lw_list': emissivities_lw,
                                       'emissivities_uv_list': emissivities_uv,
@@ -112,12 +113,13 @@ if __name__=='__main__':
                                       'dlog10m': dlog10m,
                                       'N_iter': N_iter,
                                       'R_bias': 5,
-                                      'log10_Mmin': 7.2,
-                                      'mass_binning': 150,
+                                      'log10_Mmin': 5.0,
+                                      'mass_binning': 2,
                                       'sample_hmf': sample_Poiss,
                                       'sample_SFR': sample_SFR,
                                       'sample_emiss': sample_emiss,
-                                      'bpass_read': bpass_read})
+                                      'bpass_read': bpass_read,
+                                      })
                 else: 
                     raise ValueError('Wrong wavelenght string!')
                 processes.append(p)
@@ -125,9 +127,10 @@ if __name__=='__main__':
              #   print(p.pid)
             for p in processes:
                 p.join()
-            if wavelength:
+            if wavelength != 'all':
                 emissivities_redshift.append(np.array(emissivities).flatten())
             else:
+                print(np.array(emissivities_x).flatten())
                 emissivities_x_z.append(np.array(emissivities_x).flatten())
                 emissivities_lw_z.append(np.array(emissivities_lw).flatten())
                 emissivities_uv_z.append(np.array(emissivities_uv).flatten())

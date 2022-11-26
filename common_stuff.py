@@ -1,6 +1,6 @@
 """Here are some functions common for all samplers."""
 
-from helpers import RtoM, nonlin, metalicity_from_FMR
+from helpers import RtoM, nonlin
 from astropy.cosmology import Planck15 as cosmo
 import hmf
 import numpy as np
@@ -39,8 +39,7 @@ def hmf_integral_gtm(M, dndm, mass_density=False):
     if data not provided:
     >>> m = np.logspace(10,12,500)
     >>> dndm = m**-2
-    >>> ngtm = hmf_integral_gtm(m,dndm)
-    >>> np.allclose(ngtm,1/m) #1/m is the analytic integral to infinity.
+    >>> ngtm =     >>> np.allclose(ngtm,1/m) #1/m is the analytic integral to infinity.
     True
     """
     # Eliminate NaN's
@@ -136,12 +135,19 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     """
         sample halo masses from the given hmf.
     """
+
+    if not nbins:
+        nbins = 1
+
     N_actual = np.zeros(nbins)
     m_haloes = []
     counter=0
+
     while np.sum(m_haloes) <= mass_coll:
+
         mbin = 10 ** np.linspace(Mmin, Mmax, nbins + 1)
         N_mean_list = np.zeros(nbins)
+
         for k in range(nbins):
             if mbin[k] < mx[-1]:
                 inds = [b for b,m in enumerate(mx) if m > mbin[k] and m < mbin[k+1]]
@@ -175,76 +181,3 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     N_this_iter = len(m_haloes)
     return N_this_iter, m_haloes
 
-def sfr_ms_mh_21cmmc(Mh, z,get_stellar_mass = True):
-    """
-        Get scaling relations for SFR-Mh or SFR-Mstar and Mstar-Mh from 21cmmc.
-    """
-    a_SFR = 1.0 #the same number in both cases
-    a_stellar_mass = 1.5
-    b_stellar_mass = np.log10(0.0076) - 5
-    b_SFR = -np.log10(0.43) + np.log10(cosmo.H(z).to(u.yr**(-1)).value)
-
-    if get_stellar_mass:
-        return a_SFR, b_SFR, a_stellar_mass, b_stellar_mass
-    else:
-        return a_SFR, b_stellar_mass + b_SFR
-       
-def Brorby_lx(Z=None):
-    """
-        Get scaling law for Lx - SFR relation from Brorby+16.
-        Parameters
-        ----------
-        Z: float,
-            metalictiy.
-        Returns
-        ----------
-        a_Lx: float,
-            leadin factor in the relation.
-        b_Lx: float,
-            intercept of the relation.
-        Notes
-        ----------
-        metalicities are given as 12 + log(O/H).
-        Solar metalicity is given as 12 + log(O/H)_sun = 8.69.
-    """
-    if Z:
-        a_Lx = 1.03
-        b_Z = -0.64
-        b_Lx = b_Z * np.log10(10**(Z-12) / 10**(8.69 - 12)) + 39.46
-        sigma_Lx = 0.34
-        return a_Lx, b_Lx, sigma_Lx
-    else:
-        a_Lx = 1.00
-        b_Lx = 39.85
-        sigma_Lx = 0.25
-        return a_Lx, b_Lx, sigma_Lx
-
-def Zahid_metal(Mstell, z):
-    """
-        Get metalicity from Zahid+14.
-        Parameters
-        ----------
-        Mstell: float,
-            stellar mass.
-        z: float,
-            redshift.
-        
-        Notes
-        ----------
-        metalicities are given as 12 + log(O/H).
-    """
-
-    Z0 = 9.1
-    bZ = 9.135 + 2.64 * np.log10(1+z)
-    gammaz = 0.522
-    M0 = 10**bz
-    Z = Z0 + np.log10(1-np.exp(-(Mstell/M0)**gammaz))
-    
-    delta_b0 =  - gammaz / (np.exp(+(Mstell/M0)**gammaz)-1) * (Mstell / M0)**(gammaz-1) * np.log(10) * M0 * 0.003
-    delta_Z0 = 0.002
-    delta_gammaz = - gammaz / (np.exp(+(Mstell/M0)**gammaz)-1) * (Mstell / M0)**(gammaz-1) * 0.009
-    delta_c0 = - gammaz / (np.exp(+(Mstell/M0)**gammaz)-1) * (Mstell / M0)**(gammaz-1) * np.log(10) * M0 * np.log10(1+z) * 0.05
-    
-    delta_tot = np.sqrt(delta_b0 ** 2 + delta_Z0 ** 2 + delta_gammaz ** 2 + delta_c0 ** 2)
-    
-    return Z, delta_tot

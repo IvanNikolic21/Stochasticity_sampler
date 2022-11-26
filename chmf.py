@@ -369,20 +369,33 @@ class chmf:
         f_coll_st = integrate.quad (self.dfdM_st, np.log(M), np.log(10**19), limit=1000, epsabs=10**-10)
         return f_coll_st[0] / (cosmo.Om0*self.critical_density)
     
-    def mass_coll_grt_ST(delta_bias):
+    def mass_coll_grt_ST(self, delta_bias, mass = None):
         """
             Modified collapsed fraction to be in line with the modified hmf.
+
+            Paramereters
+            ------------
+            delta_bias: float,
+                overdensity to calculate the collapsed fraction for.
+            mass: float, optional;
+                minimum mass for which we calculate the collapsed fraction.
+                If not given, minimum hmf mass will be used.
+                Given in log-scale.
         """
-        fraction =  self.f_coll_ST(10**self.log10_Mmin) / self.f_coll_calc()
-        s = np.sqrt(2 * self.(self.sigma_z0_array[0]**2 - self.sigma_cell()**2))
+        if not mass:
+            mass = self.log10_Mmin
+        fraction =  self.f_coll_st(10**mass) / self.f_coll_calc(10**mass)
+        s = np.sqrt(2 * (self.sigma_z0_array_st[0]**2 - self.sigma_cell()**2))
         er_f = erfc ((self.Deltac/self.dicke() - delta_bias)/ s)
         return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density
     
     def prep_collapsed_fractions(self, check_cache=True):
-        if check_cache and os.path.exists('/home/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m, self.delta_bias)):
-            self.derivative_ratios = np.load('/home/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m, self.delta_bias))
-            self.collapsed_ratios = np.load('/home/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m, self.delta_bias))
+        if check_cache and os.path.exists('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m)):
+            print("Managed to read the sigma files")
+            self.derivative_ratios = np.load('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m))
+            self.collapsed_ratios = np.load('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m))
         else:
+            print("Didn't manage to read the sigma files.")
             bins_for_deriv = 10**np.arange(self.log10_Mmin-2 * self.dlog10m, self.log10_Mmax + 2*self.dlog10m, self.dlog10m)
         #this way I have enough derivatives
             remember_index= len(bins_for_deriv)
@@ -403,8 +416,8 @@ class chmf:
             self.derivative_ratios = derivative_spline(bins_for_deriv[2:remember_index])
             self.collapsed_ratios = collapsed_ratios_full[2:-2]
 
-            np.save('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m, self.delta_bias), self.derivative_ratios)
-            np.save('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m, self.delta_bias), self.collapsed_ratios)
+            np.save('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m), self.derivative_ratios)
+            np.save('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m), self.collapsed_ratios)
         return self.derivative_ratios
 
     def ST_hmf(self, delta_inst):
@@ -416,7 +429,7 @@ class chmf:
                 biased_hmf_part = -(self.critical_density*cosmo.Om0)/self.bins[index]/np.sqrt(2*np.pi) * delta * ((sigma_array[index])**(-1.5)) * \
                                 (np.e**(-0.5*delta**2/(sigma_array[index]))) * self.sigma_derivatives_st[index]
                 self.hmf_ST[index] = self.collapsed_ratios[index] * biased_hmf_part
-                print('Let\' see which part is more significant for this mass:', self.hmf_ST[index], 'or the other one', self.critical_density*cosmo.Om0 / self.bins[index] * self.derivative_ratios[index] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array[index]))))
+               # print('Let\' see which part is more significant for this mass:', self.hmf_ST[index], 'or the other one', self.critical_density*cosmo.Om0 / self.bins[index] * self.derivative_ratios[index] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array[index]))))
                 self.hmf_ST[index]+= self.critical_density*cosmo.Om0 / self.bins[index] * self.derivative_ratios[index] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array[index])))
             else:
                 self.hmf_ST[index]=0.0

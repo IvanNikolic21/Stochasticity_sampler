@@ -98,13 +98,13 @@ class bpass_loader:
     
     def get_LW(self, metal, band, SFR, z):
         
-        for i, met_cur in enumerate(metal_avail):
+        for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
                 break
         met_prev = None
         if i!=0:
-            met_prev = metal_avail[i-1]
-        met_next = metal_avail[i]
+            met_prev = self.metal_avail[i-1]
+        met_next = self.metal_avail[i]
         
         SEDp = self.SEDS[i-1]
         SEDn = self.SEDS[i]
@@ -113,10 +113,10 @@ class bpass_loader:
         
         for index, age in enumerate(self.ag):
             if age > t_age:
-                ages_UV = index -1
+                ages_LW = index -1
                 break
         if index==self.ages-1:
-            ages_UV=self.ages-1
+            ages_LW=self.ages-1
         
         mburst = SFR / 10**6
         
@@ -124,8 +124,8 @@ class bpass_loader:
         LW_p = np.zeros(self.ages-1)
         LW_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
-            LW_p[i] = simps(SEDp[i][911:1216], wv_LW) * mburst * (self.ag[i+1]- self.ag[i])
-            LW_n[i] = simps(SEDn[i][911:1216], wv_LW) * mburst * (self.ag[i+1]- self.ag[i])
+            LW_p[i] = simps(SEDp[i][911:1107], wv_LW) * mburst * (self.ag[i+1]- self.ag[i])
+            LW_n[i] = simps(SEDn[i][911:1107], wv_LW) * mburst * (self.ag[i+1]- self.ag[i])
         
         if ages_LW!=(self.ages):
             missing_piecep = np.interp(t_age, self.ag[1:], LW_p, right=0)

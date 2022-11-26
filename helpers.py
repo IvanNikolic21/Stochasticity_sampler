@@ -7,23 +7,6 @@ def nonlin(x):
     """non-linear function for Eulerian-Lagrangian transformations."""
     return -1.35*(1+x)**(-2/3) + 0.78785*(1+x)**(-0.58661) - 1.12431*(1+x)**(-1/2) + 1.68647
 
-def metalicity_from_FMR ( M_star, SFR):
-    """
-    metalicity from Curti+19
-    
-    -----
-    
-    Function takes in the stellar mass and SFR and outputs the metallicity 12+log(O/H)
-    """
-    sigma_met = 0.054  #value they qoute for the sigma_FMR
-    Z_0 = 8.779
-    gamma = 0.31
-    beta = 2.1
-    m_0 = 10.11
-    m_1 = 0.56
-    M_0 = 10**(m_0 + m_1 * np.log10(SFR))
-    return (Z_0 - gamma/beta * np.log10(1+(M_star/M_0)**(-beta))), sigma_met
-
 def RtoM( R):
     CMperMPC = 3.086e24
     Msun = 1.989e33
