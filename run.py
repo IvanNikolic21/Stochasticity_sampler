@@ -151,11 +151,11 @@ if __name__=='__main__':
         np.save(filename, np.array(emissivities_redshift, dtype=object))
     
     else:
-        filename_x = directory + 'Xall' + '_emissivities' + str(z_init) + '_'
-        filename_lw = directory + 'LWall' + '_emissivities' + str(z_init) + '_'
-        filename_uv = directory + 'UVall' + '_emissivities' + str(z_init) + '_'
+        filename_x = directory + 'Xall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_'
+        filename_lw = directory + 'LWall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_'
+        filename_uv = directory + 'UVall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_'
         
-        if sample_SFR == 0 or sample_SFR ==2:
+        if sample_SFR:
             filename_x = filename_x + '_sfrTRUE'
             filename_lw = filename_lw + '_sfrTRUE'
             filename_uv = filename_uv + '_sfrTRUE'
@@ -165,7 +165,7 @@ if __name__=='__main__':
             filename_lw = filename_lw + '_sfrFALSE'
             filename_uv = filename_uv + '_sfrFALSE'
         
-        if sample_emiss == 0 or sample_emiss == 2:
+        if sample_emiss:
             filename_x = filename_x + '_emissTRUE_'
             filename_lw = filename_lw + '_emissTRUE_'
             filename_uv = filename_uv + '_emissTRUE_'
