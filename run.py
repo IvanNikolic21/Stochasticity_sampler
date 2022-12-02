@@ -37,11 +37,28 @@ if __name__=='__main__':
     dlog10m = float(sys.argv[5])
     N_iter = int(sys.argv[6])
     n_processes = int(sys.argv[7])
-    #assert wavelength==10, f"Whoops"
-    sample_SFR = bool(str(sys.argv[8]))
-    sample_emiss = bool(str(sys.argv[9]))
-    sample_Poiss = bool(str(sys.argv[10]))
-    #assert False, f"start now!"
+
+    sample_SFR = sys.argv[8]
+    sample_emiss = sys.argv[9]
+    sample_Poiss = sys.argv[10]
+
+    if sample_SFR in ["False", "FALSE", "false", "0", "No"]:
+        sample_SFR = False
+    else: 
+        sample_SFR = True
+
+    if sample_emiss in ["False", "FALSE", "false", "0", "No"]:
+        sample_emiss = False
+    else:
+        sample_emiss = True
+
+    if sample_Poiss in ["False", "FALSE", "false", "0", "No"]:
+        sample_Poiss = False
+    else:
+        sample_Poiss = True
+    
+    assert type(sample_SFR) == bool, "Something went wrong, type is not boolean"
+
     time_ini = time.time()
     if wavelength == 'UV' or wavelength =='X' or wavelength == 'all':
         start = time.time()
