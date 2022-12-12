@@ -1,5 +1,6 @@
 """Here are some functions common for all samplers."""
 
+import warnings
 from helpers import RtoM, nonlin
 from astropy.cosmology import Planck15 as cosmo
 import hmf
@@ -138,46 +139,106 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
 
     if not nbins:
         nbins = 1
-
+    
     N_actual = np.zeros(nbins)
     m_haloes = []
     counter=0
-
-    while np.sum(m_haloes) <= mass_coll:
-
+    print(nbins, "This is nbins")
+    max_iter = 10000
+    for iter_num in range(max_iter):
         mbin = 10 ** np.linspace(Mmin, Mmax, nbins + 1)
-        N_mean_list = np.zeros(nbins)
-
-        for k in range(nbins):
-            if mbin[k] < mx[-1]:
-                inds = [b for b,m in enumerate(mx) if m > mbin[k] and m < mbin[k+1]]
-  #              try:
-                if len(inds)>=4:
-                    N_cs = hmf_integral_gtm(mx[inds], mf[inds]) * Vb
-                    N_mean_list[k] = N_cs[0]
-                    N_cs = N_cs / N_cs[0]
-                #except:
-                else:
-                    continue
-                if sample_hmf:
-                    N_actual[counter+k] = np.random.poisson(N_mean_list[k])
-                else:
-                    N_actual[counter+k] = round(N_mean_list[k])
+        if nbins > 1:
+            N_mean_list = np.zeros(nbins)
+        if nbins==1:
+            inds  = [b for b,m in enumerate(mx) if m > 10**Mmin and m<10**Mmax]
             
-                random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter+k]))
-                for index, rn in enumerate(random_number_this_mass_bin):
-                    m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+            if len(inds)>=4:
+                    N_cs = hmf_integral_gtm(mx[inds], mf[inds]) * Vb
+                    N_mean_list = N_cs[0]
+                    N_cs = N_cs / N_cs[0]
+            else:
+                raise ValueError("You have 1 bin but less than 4 hmf elements inside it. Select a more detailed hmf or increase you limits!")
+            
+            if sample_hmf:
+                N_actual[counter] = np.random.poission(N_mean_list)
+  
+            else:
+                N_actual[counter] = round(N_mean_list)
+            random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter]))
+            for index, rn in enumerate(random_number_this_mass_bin):
+                m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+        else:
+            for k in range(nbins):
+                if mbin[k] < mx[-1]:
+                    inds = [b for b,m in enumerate(mx) if m > mbin[k] and m < mbin[k+1]]
+                    
+  #                  try:
+                    if len(inds)>=4:
+                        N_cs = hmf_integral_gtm(mx[inds], mf[inds]) * Vb
+                        N_mean_list[k] = N_cs[0]
+                        N_cs = N_cs / N_cs[0]
+                #except:
+                    else:
+                        continue
+                    if sample_hmf:
+                        N_actual[counter+k] = np.random.poisson(N_mean_list[k])
+                    else:
+                        N_actual[counter+k] = round(N_mean_list[k])
+
+                    random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter+k]))
+                    for index, rn in enumerate(random_number_this_mass_bin):
+                        m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+        if np.sum(m_haloes) >= mass_coll:
+            break
+        print("This is the sum of haloes", np.sum(m_haloes), "and this is where I want to be", mass_coll)
         counter+=nbins
         if nbins>1:
             nbins = int(nbins/2)
-        if nbins == 1 and N_actual[-1]<1:
+        #if nbins == 1 and N_actual[-1]<1:
            # print("looks like there is no problem here, no haloes")
-            break
+        #    break
             #print(nbins, mass_coll, np.sum(m_haloes))
         N_actual = np.concatenate((N_actual, np.zeros(nbins)))
+    if iter_num == max_iter - 1:
+        warnings.warn("In {} iterations couldn't find all haloes. Moving on, but beware!".format(max_iter))
+    #while np.sum(m_haloes) <= mass_coll:
+#
+ #       mbin = 10 ** np.linspace(Mmin, Mmax, nbins + 1)
+  #      N_mean_list = np.zeros(nbins)
+#
+ #       for k in range(nbins):
+  #          if mbin[k] < mx[-1]:
+   #             inds = [b for b,m in enumerate(mx) if m > mbin[k] and m < mbin[k+1]]
+    #            print(inds)
+  #  #            try:
+      #          if len(inds)>=4:
+       #             N_cs = hmf_integral_gtm(mx[inds], mf[inds]) * Vb
+        #            N_mean_list[k] = N_cs[0]
+         #           N_cs = N_cs / N_cs[0]
+          #      #except:
+           #     else:
+            #        continue
+             #   if sample_hmf:
+              #      N_actual[counter+k] = np.random.poisson(N_mean_list[k])
+               # else:
+#                    N_actual[counter+k] = round(N_mean_list[k])
+ #           
+  #              random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter+k]))
+   #             for index, rn in enumerate(random_number_this_mass_bin):
+    #                m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+     #   counter+=nbins
+      #  if nbins>1:
+       #     nbins = int(nbins/2)
+        #if nbins == 1 and N_actual[-1]<1:
+         #  # print("looks like there is no problem here, no haloes")
+          #  break
+           # #print(nbins, mass_coll, np.sum(m_haloes))
+#        N_actual = np.concatenate((N_actual, np.zeros(nbins)))
     m_haloes = np.sort(np.array(m_haloes))
-    while np.sum(m_haloes)>=mass_coll:
-        m_haloes = np.delete(m_haloes, 0)
-    N_this_iter = len(m_haloes)
-    return N_this_iter, m_haloes
+    index_of_sum = 1
+    for index, mass in  enumerate(m_haloes):
+        if np.sum(m_haloes[index:]) <= mass_coll:
+            break
+    N_this_iter = len(m_haloes[index:])
+    return N_this_iter, m_haloes[index:]
 

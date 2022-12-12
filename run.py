@@ -64,7 +64,7 @@ if __name__=='__main__':
         start = time.time()
         bpass_read = bpass_loader(parallel = n_processes)
     time_out = time.time()
-    print("bpass reading now", time_out-time_ini)
+    #print("bpass reading now", time_out-time_ini)
     #assert bpass_read==0, f"running now!"    
     if wavelength!= 'all':
         emissivities_redshift = []
@@ -131,7 +131,7 @@ if __name__=='__main__':
                                       'N_iter': N_iter,
                                       'R_bias': 5,
                                       'log10_Mmin': 5.0,
-                                      'mass_binning': 2,
+                                      'mass_binning': 1,
                                       'sample_hmf': sample_Poiss,
                                       'sample_SFR': sample_SFR,
                                       'sample_emiss': sample_emiss,

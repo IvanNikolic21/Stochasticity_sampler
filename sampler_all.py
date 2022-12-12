@@ -37,10 +37,11 @@ def Sampler_ALL(emissivities_x_list,
                 bpass_read = None,
            ):
     
-    M_turn = 5*10**8  #Park+19 parametrization
+    M_turn = 5*10**7  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
 
     ########################INITIALIZE SOME SCALING LAWS########################
+    print("Inside the function", flush=True)
     np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))    
  
     if sample_densities:
@@ -51,7 +52,7 @@ def Sampler_ALL(emissivities_x_list,
                                        log10_Mmax, 
                                        dlog10m, 
                                        R_bias)
-        
+        #np.savetxt('/home/inikolic/projects/stochasticity/samples/density{}.txt'.format(z), np.array(delta_list)) 
         hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = R_bias)
         hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
         hmf_this.prep_collapsed_fractions()
@@ -94,7 +95,8 @@ def Sampler_ALL(emissivities_x_list,
     emissivities_x = np.zeros(shape = int(N_iter))
     emissivities_lw = np.zeros(shape = int(N_iter))
     emissivities_uv = np.zeros(shape = int(N_iter))
-
+    tot_mass = np.zeros(shape=int(N_iter))
+    print("Starting the iteration", flush=True)
     for i in range(N_iter):
         if sample_densities:
 
@@ -112,17 +114,19 @@ def Sampler_ALL(emissivities_x_list,
             masses=masses[:index_to_stop]
             mass_func=mass_func[:index_to_stop]
             #######################TEMPORARY MINIMUM MASS#######################
-            Mmin_temp = 7.7
+            Mmin_temp = 7.6
            
             mass_coll = hmf_this.mass_coll_grt_ST(delta_bias, mass=Mmin_temp)
             
             N_mean_cs = ig_hmf.hmf_integral_gtm(masses, 
                                                 mass_func) * V_bias
+            np.savetxt('/home/inikolic/projects/stochasticity/samples/mass{}.txt'.format(delta_bias), np.array(mass_func))
             N_mean = int((N_mean_cs)[0])
             N_cs_norm = N_mean_cs/N_mean_cs[0]
 
             time_is_up = time.time()
             if mass_binning:
+                print("starting to sample the halos for the first time", flush=True)
 
                 N_this_iter, mhs = _sample_halos(Mmin_temp, 
                                                  log10_Mmax, 
@@ -132,7 +136,10 @@ def Sampler_ALL(emissivities_x_list,
                                                  mass_coll,
                                                  V_bias, 
                                                  sample_hmf)
-
+                #print("These are the masses:", mhs, flush=True)
+                np.savetxt('/home/inikolic/projects/stochasticity/samples/halos{}.txt'.format(delta_bias), np.array(mhs))
+                #print("Here's one file for you to analyze", flush=True)
+                assert len(mhs) > 1, "only one mass, aborting"
         N_this_iter = int(N_this_iter)
         if not mass_binning:
             N_this_iter = N_mean
@@ -147,7 +154,7 @@ def Sampler_ALL(emissivities_x_list,
             for index, mass in enumerate(mhs):
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
                     masses_saved.append(mass)
-
+        tot_mass[i] = np.sum(masses_saved)
         L_UV = np.zeros(shape = N_this_iter)
         L_X = np.zeros(shape = N_this_iter)
         L_LW  = np.zeros(shape = N_this_iter)
@@ -303,11 +310,11 @@ def Sampler_ALL(emissivities_x_list,
             L_X[j] = Lx_sample
             L_UV[j] = F_UV
             L_LW[j] = F_LW
-        print("Here are the luminosities", L_X, "and here's the number of them", np.shape(L_X))
+        #print("Here are the luminosities", L_X, "and here's the number of them", np.shape(L_X))
         emissivities_x[i] = np.sum(L_X)
         emissivities_uv[i] = np.sum(L_UV)
         emissivities_lw[i] = np.sum(L_LW)
-
+    np.savetxt('/home/inikolic/projects/stochasticity/samples/tot_halo_mass{}.txt'.format(z), tot_mass)
     emissivities_x_list.append(emissivities_x)
     emissivities_uv_list.append(emissivities_uv)
     emissivities_lw_list.append(emissivities_lw)
