@@ -384,8 +384,11 @@ class chmf:
         """
         if not mass:
             mass = self.log10_Mmin
+            sigma_currmass = self.sigma_z0_array_st[0]
+        else:
+            sigma_currmass = np.interp(10**mass, self.bins, self.sigma_z0_array_st)
         fraction =  self.f_coll_st(10**mass) / self.f_coll_calc(10**mass)
-        s = np.sqrt(2 * (self.sigma_z0_array_st[0]**2 - self.sigma_cell()**2))
+        s = np.sqrt(2 * (sigma_currmass**2 - self.sigma_cell()**2))
         er_f = erfc ((self.Deltac/self.dicke() - delta_bias)/ s)
         return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density
     
