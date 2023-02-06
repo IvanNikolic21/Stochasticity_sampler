@@ -390,7 +390,7 @@ class chmf:
         fraction =  self.f_coll_st(10**mass) / self.f_coll_calc(10**mass)
         s = np.sqrt(2 * (sigma_currmass**2 - self.sigma_cell()**2))
         er_f = erfc ((self.Deltac/self.dicke() - delta_bias)/ s)
-        return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density
+        return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density * cosmo.Om0
     
     def prep_collapsed_fractions(self, check_cache=True):
         if check_cache and os.path.exists('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m)):
