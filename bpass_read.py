@@ -141,8 +141,59 @@ class bpass_loader:
         b_LW = (- FLW_n * met_prev + FLW_p * met_next) / (met_next - met_prev)
         
         return a_LW * metal + b_LW
-        
-                
+
+    def get_beta(self, metal, band, SFR, z):
+        for i, met_cur in enumerate(self.metal_avail):
+            if metal < met_cur:
+                break
+        met_prev = None
+        if i!=0:
+            met_prev = self.metal_avail[i-1]
+        met_next = self.metal_avail[i]
+
+        SEDp = self.SEDS[i - 1]
+        SEDn = self.SEDS[i]
+
+        t_age = self.t_star * (cosmo.H(z).to(u.yr ** (-1)).value) ** -1
+
+        for index, age in enumerate(self.ag):
+            if age > t_age:
+                ages_bet = index - 1
+                break
+        if index == self.ages - 1:
+            ages_LW = self.ages - 1
+
+        mburst = SFR / 10 ** 6
+
+        wv_bet = self.wv[1216:]        #beta is usually derived redwards of Ly-a
+        bet_p = np.zeros((self.ages - 1, len(wv_bet)))
+        bet_n = np.zeros((self.ages - 1, len(wv_bet)))
+
+        for i in range(self.ages-1):
+            bet_p[i] = SEDp[i][1216:] * mburst * (self.ag[i+1]- self.ag[i])
+            bet_n[i] = SEDn[i][1216:] * mburst * (self.ag[i+1]- self.ag[i])
+
+        if ages_bet!=(self.ages):
+            for wv_ind, wv_inst in enumerate(wv_bet):
+                missing_piecep = np.interp(t_age, self.ag[1:], bet_p[:,wv_ind], right=0)
+                missing_piecen = np.interp(t_age, self.ag[1:], bet_n[:,wv_ind], right=0)
+
+                bet_p_to_sum = np.append(bet_p[:ages_LW, wv_ind], missing_piecep)
+                bet_n_to_sum = np.append(bet_n[:ages_LW, wv_ind], missing_piecen)
+
+        SED_summed_p = np.sum(bet_p_to_sum, axis=0)
+        SED_summed_n = np.sum(bet_n_to_sum, axis=0)
+
+        SED_interp = np.zeros(len(wv_bet))
+        for wv_ind, wv_inst in enumerate(wv_bet):
+            a_bet = (SED_summed_p[wv_ind] - SED_summed_n[wv_ind]) / (met_next - met_prev)
+            b_bet = (- SED_summed_n[wv_ind] * met_prev + SED_summed_p[wv_ind] * met_next) / (met_next - met_prev)
+            SED_interp[wv_ind] = a_bet * metal + b_bet
+
+        beta_slope, _ = np.polyfit(np.log10(wv_bet),np.log10(SED_interp), 1)
+
+        return beta_slope
+
 def loader(metal, band,SFR,z, filename = '/home/inikolic/projects/stochasticity/stoc_sampler/BPASS/spectra-bin-imf135_300.a+00.'):
     """
         Function to load and manipulate with the bpass data
