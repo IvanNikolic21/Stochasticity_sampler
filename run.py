@@ -42,6 +42,8 @@ if __name__=='__main__':
     sample_emiss = sys.argv[9]
     sample_Poiss = sys.argv[10]
 
+    R_bias = 2
+
     if sample_SFR in ["False", "FALSE", "false", "0", "No"]:
         sample_SFR = False
     else: 
@@ -129,7 +131,7 @@ if __name__=='__main__':
                                       'z': z,
                                       'dlog10m': dlog10m,
                                       'N_iter': N_iter,
-                                      'R_bias': 5,
+                                      'R_bias': R_bias,
                                       'log10_Mmin': 5.0,
                                       'mass_binning': 1,
                                       'sample_hmf': sample_Poiss,
@@ -147,7 +149,6 @@ if __name__=='__main__':
             if wavelength != 'all':
                 emissivities_redshift.append(np.array(emissivities).flatten())
             else:
-                print(np.array(emissivities_x).flatten())
                 emissivities_x_z.append(np.array(emissivities_x).flatten())
                 emissivities_lw_z.append(np.array(emissivities_lw).flatten())
                 emissivities_uv_z.append(np.array(emissivities_uv).flatten())
@@ -168,9 +169,9 @@ if __name__=='__main__':
         np.save(filename, np.array(emissivities_redshift, dtype=object))
     
     else:
-        filename_x = directory + 'Xall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_'
-        filename_lw = directory + 'LWall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_'
-        filename_uv = directory + 'UVall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_'
+        filename_x = directory + 'Xall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_R' + str(R_bias)
+        filename_lw = directory + 'LWall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_R' + str(R_bias)
+        filename_uv = directory + 'UVall' + '_emissivities' + str(z_init) + '_' + str(z_end) + '_R' + str(R_bias)
         
         if sample_SFR:
             filename_x = filename_x + '_sfrTRUE'

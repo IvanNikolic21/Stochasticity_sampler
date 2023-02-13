@@ -160,10 +160,11 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
                 raise ValueError("You have 1 bin but less than 4 hmf elements inside it. Select a more detailed hmf or increase you limits!")
             
             if sample_hmf:
-                N_actual[counter] = np.random.poission(N_mean_list)
+                N_actual[counter] = np.random.poisson(N_mean_list)
   
             else:
                 N_actual[counter] = round(N_mean_list)
+                print("This is the <<actual>> number of halos for this iteration, 1 bin case", N_actual[counter])
             random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter]))
             for index, rn in enumerate(random_number_this_mass_bin):
                 m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
@@ -184,12 +185,15 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
                         N_actual[counter+k] = np.random.poisson(N_mean_list[k])
                     else:
                         N_actual[counter+k] = round(N_mean_list[k])
+                        print("This is the <<actual>> number of halos for this iteration", N_actual[counter+k])
 
                     random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter+k]))
                     for index, rn in enumerate(random_number_this_mass_bin):
                         m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
         if np.sum(m_haloes) >= mass_coll:
             break
+        #if np.sum(m_haloes) < 1e-5 * mass_coll:
+        #    raise ValueError("totoal mass of haloes is so low that it could never reach anythin")
         print("This is the sum of haloes", np.sum(m_haloes), "and this is where I want to be", mass_coll)
         counter+=nbins
         if nbins>1:
@@ -199,8 +203,9 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
         #    break
             #print(nbins, mass_coll, np.sum(m_haloes))
         N_actual = np.concatenate((N_actual, np.zeros(nbins)))
-    if iter_num == max_iter - 1:
-        warnings.warn("In {} iterations couldn't find all haloes. Moving on, but beware!".format(max_iter))
+        if iter_num == max_iter - 1:
+            warnings.warn("In {} iterations couldn't find all haloes. Moving on, but beware!".format(max_iter))
+            break
     #while np.sum(m_haloes) <= mass_coll:
 #
  #       mbin = 10 ** np.linspace(Mmin, Mmax, nbins + 1)

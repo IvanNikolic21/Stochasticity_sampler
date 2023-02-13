@@ -41,7 +41,6 @@ def Sampler_ALL(emissivities_x_list,
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
 
     ########################INITIALIZE SOME SCALING LAWS########################
-    print("Inside the function", flush=True)
     np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))    
  
     if sample_densities:
@@ -96,8 +95,9 @@ def Sampler_ALL(emissivities_x_list,
     emissivities_lw = np.zeros(shape = int(N_iter))
     emissivities_uv = np.zeros(shape = int(N_iter))
     tot_mass = np.zeros(shape=int(N_iter))
-    print("Starting the iteration", flush=True)
+    #print("Starting the iteration", flush=True)
     for i in range(N_iter):
+        start = time.time()
         if sample_densities:
 
             delta_bias = delta_list[i]
@@ -120,26 +120,37 @@ def Sampler_ALL(emissivities_x_list,
             
             N_mean_cs = ig_hmf.hmf_integral_gtm(masses, 
                                                 mass_func) * V_bias
-            np.savetxt('/home/inikolic/projects/stochasticity/samples/mass{}.txt'.format(delta_bias), np.array(mass_func))
+            #np.savetxt('/home/inikolic/projects/stochasticity/samples/mass{}.txt'.format(delta_bias), np.array(mass_func))
             N_mean = int((N_mean_cs)[0])
             N_cs_norm = N_mean_cs/N_mean_cs[0]
 
             time_is_up = time.time()
             if mass_binning:
-                print("starting to sample the halos for the first time", flush=True)
-
+     #           print("starting to sample the halos for the first time", flush=True)
+                #print(Mmin_temp, log10_Mmax, mass_binning)
+                #print( len(masses), sep=", ")
+                #print( len(mass_func), sep=", ")
+                #print(mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
                 N_this_iter, mhs = _sample_halos(Mmin_temp, 
                                                  log10_Mmax, 
                                                  mass_binning,
-                                                 masses, 
+                                                 masses[:len(mass_func)], 
                                                  mass_func, 
                                                  mass_coll,
                                                  V_bias, 
                                                  sample_hmf)
                 #print("These are the masses:", mhs, flush=True)
-                np.savetxt('/home/inikolic/projects/stochasticity/samples/halos{}.txt'.format(delta_bias), np.array(mhs))
+            #    np.savetxt('/home/inikolic/projects/stochasticity/samples/halos{}.txt'.format(delta_bias), np.array(mhs))
                 #print("Here's one file for you to analyze", flush=True)
-                assert len(mhs) > 1, "only one mass, aborting"
+                if np.sum(mhs) < 0.5 *  mass_coll:
+                    print("minimal temperature", Mmin_temp, "log10_Mmax", log10_Mmax,"mass_binning", mass_binning, "redshift", z)
+                    print( len(masses), sep=", ")
+                    print( len(mass_func), sep=", ")
+                    print(mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
+                    raise ValueError("For this iteration sampling halos failed")
+                #assert len(mhs) < 1, "only one mass, aborting"
+        time_is_now = time.time()
+        print("Time for mass sampling", time_is_now - time_is_up)
         N_this_iter = int(N_this_iter)
         if not mass_binning:
             N_this_iter = N_mean
@@ -314,7 +325,9 @@ def Sampler_ALL(emissivities_x_list,
         emissivities_x[i] = np.sum(L_X)
         emissivities_uv[i] = np.sum(L_UV)
         emissivities_lw[i] = np.sum(L_LW)
-    np.savetxt('/home/inikolic/projects/stochasticity/samples/tot_halo_mass{}.txt'.format(z), tot_mass)
+        end = time.time()
+        print("time for one iteraton", end-start)
+    #np.savetxt('/home/inikolic/projects/stochasticity/samples/tot_halo_mass{}.txt'.format(z), tot_mass)
     emissivities_x_list.append(emissivities_x)
     emissivities_uv_list.append(emissivities_uv)
     emissivities_lw_list.append(emissivities_lw)
