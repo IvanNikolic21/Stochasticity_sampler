@@ -10,7 +10,7 @@ class HdF5Saver:
         self.create_file()
 
     def create_file(self):
-        self.filename = str(self.pid) + str(self.z) + '.hdf5'
+        self.filename = str(self.pid) + str(self.redshift) + '.hdf5'
         f  = h5py.File(self.filename, 'a')
         f.attrs['redshift'] = self.redshift
         f.attrs['pid'] = self.pid
