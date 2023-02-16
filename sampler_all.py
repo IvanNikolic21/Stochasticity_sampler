@@ -320,7 +320,7 @@ def Sampler_ALL(emissivities_x_list,
 
 
             ###########GET_BETAS#######
-            beta_samples.append(bpass_read.get_beta(Z_sample, SFR_sampl, z))
+            beta_samples.append(bpass_read.get_beta(Z_sample, SFR_samp, z))
 
 
             Mstar_samples.append(Ms_sample)
