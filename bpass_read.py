@@ -142,7 +142,7 @@ class bpass_loader:
         
         return a_LW * metal + b_LW
 
-    def get_beta(self, metal, band, SFR, z):
+    def get_beta(self, metal, SFR, z):
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
                 break

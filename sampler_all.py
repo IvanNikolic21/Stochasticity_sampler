@@ -14,6 +14,7 @@ import numpy as np
 from fesc import fesc_distr
 from numpy.random import normal
 import time
+from save import HdF5Saver
 
 def Sampler_ALL(emissivities_x_list,
                 emissivities_lw_list,
@@ -42,7 +43,16 @@ def Sampler_ALL(emissivities_x_list,
 
     ########################INITIALIZE SOME SCALING LAWS########################
     np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))    
- 
+
+    #initialize h5 file
+    container = HdF5Saver(
+        z,
+        os.getpid(),
+        '/home/inikolic/projects/stochasticity/samples/'
+    )
+    container.create_file()
+    container.create_redshift()
+
     if sample_densities:
 
         delta_list = _sample_densities(z, 
@@ -105,6 +115,8 @@ def Sampler_ALL(emissivities_x_list,
             delta_bias = np.interp(delta_bias, delta_lin_values, delta_nonlin)
             delta_bias /= hmf_this.dicke()
 
+            delta_container = container.add_delta_group(delta_bias)
+
             masses = hmf_this.bins
             mass_func = hmf_this.ST_hmf(delta_bias)
 
@@ -165,6 +177,14 @@ def Sampler_ALL(emissivities_x_list,
             for index, mass in enumerate(mhs):
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
                     masses_saved.append(mass)
+
+        container.add_halo_masses(np.array(masses_saved))
+
+        Mstar_samples = []
+        metalicity_samples = []
+        SFR_samples = []
+        beta_samples = []
+
         tot_mass[i] = np.sum(masses_saved)
         L_UV = np.zeros(shape = N_this_iter)
         L_X = np.zeros(shape = N_this_iter)
@@ -297,7 +317,15 @@ def Sampler_ALL(emissivities_x_list,
             else:
                 Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
                 F_LW = bpass_read.get_LW(Z_sample, 'LW', SFR_samp, z)
-            
+
+
+            ###########GET_BETAS#######
+            beta_samples.append(bpass_read.get_beta(Z_sample, SFR_sampl, z))
+
+
+            Mstar_samples.append(Ms_sample)
+            SFR_samples.append(SFR_samp)
+            metalicity_samples.append(Z_sample)
             #####################END OF LW PART#################################
             ####################FESC FOR LW FIRST###############################
             if f_esc_option == 'binary':
@@ -321,6 +349,14 @@ def Sampler_ALL(emissivities_x_list,
             L_X[j] = Lx_sample
             L_UV[j] = F_UV
             L_LW[j] = F_LW
+        container.add_stellar_masses(np.array(Mstar_samples))
+        container.add_SFR(np.array(SFR_samples))
+        container.add_metal(np.array(metalicity_samples))
+        container.add_beta(np.array(beta_samples))
+        container.add_Lx(L_X)
+        container.add_L_LW(L_LW)
+        container.add_L_UV(L_UV)
+
         #print("Here are the luminosities", L_X, "and here's the number of them", np.shape(L_X))
         emissivities_x[i] = np.sum(L_X)
         emissivities_uv[i] = np.sum(L_UV)
@@ -331,3 +367,8 @@ def Sampler_ALL(emissivities_x_list,
     emissivities_x_list.append(emissivities_x)
     emissivities_uv_list.append(emissivities_uv)
     emissivities_lw_list.append(emissivities_lw)
+
+    container.add_X(emissivities_x)
+    container.add_LW(emissivities_lw)
+    container.add_UV(emissivities_uv)
+    container = None
