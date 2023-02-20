@@ -170,3 +170,10 @@ def sigma_metalicity_const():
         returns the scatter of the relation.
     """
     return 0.054
+
+def OH_to_mass_fraction(Z_OH):
+    """
+    Convert 12+log(O/H) metalicty to mass fraction one.
+    """
+    return 10**(Z_OH - 9.0)
+    

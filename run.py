@@ -30,6 +30,7 @@ import numpy as np
 from multiprocessing import Pool, cpu_count, Process, Manager
 
 if __name__=='__main__':
+    time_start_run = time.time()
     wavelength = str(sys.argv[1])
     z_init = float(sys.argv[2])
     z_end = float(sys.argv[3])
@@ -42,7 +43,7 @@ if __name__=='__main__':
     sample_emiss = sys.argv[9]
     sample_Poiss = sys.argv[10]
 
-    R_bias = 2
+    R_bias = 5
 
     if sample_SFR in ["False", "FALSE", "false", "0", "No"]:
         sample_SFR = False
@@ -124,6 +125,8 @@ if __name__=='__main__':
                                         'sample_LW':sample_emiss,
                                         'bpass_read': bpass_read})
                 elif wavelength == 'all':
+                    time_start_sampling = time.time()
+                    print("Currently in the function run.py, starting to sample soon:", time_start_sampling - time_start_run)
                     p = Process(target = Sampler_ALL,
                                kwargs={'emissivities_x_list': emissivities_x,
                                       'emissivities_lw_list': emissivities_lw,
@@ -139,6 +142,8 @@ if __name__=='__main__':
                                       'sample_emiss': sample_emiss,
                                       'bpass_read': bpass_read,
                                       })
+                    time_end_sampling = time.time()
+                    print("Finished sampling for this redshift, for", N_iter,"iterations, it took", time_end_sampling-time_start_sampling)
                 else: 
                     raise ValueError('Wrong wavelenght string!')
                 processes.append(p)
@@ -200,3 +205,4 @@ if __name__=='__main__':
         np.save(filename_x, np.array(emissivities_x_z, dtype = object))
         np.save(filename_lw, np.array(emissivities_lw_z, dtype = object))
         np.save(filename_uv, np.array(emissivities_uv_z, dtype = object))
+        print("From the end of sampling to end of everything it took", time.time()-time_end_sampling)

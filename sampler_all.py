@@ -37,7 +37,7 @@ def Sampler_ALL(emissivities_x_list,
                 f_esc_option = 'binary', #f_esc distribution option
                 bpass_read = None,
            ):
-    
+    time_enter_sampler = time.time()
     M_turn = 5*10**7  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
 
@@ -68,7 +68,8 @@ def Sampler_ALL(emissivities_x_list,
     
         delta_nonlin = np.linspace(-0.99,10)
         delta_lin_values= nonlin(delta_nonlin)
-            
+        time_finished_densities = time.time()
+        print("h5 initialization, and density sampling took", time_finished_densities-time_enter_sampler)        
     else:
 
         if delta_bias==0.0:
@@ -129,7 +130,8 @@ def Sampler_ALL(emissivities_x_list,
             Mmin_temp = 7.6
            
             mass_coll = hmf_this.mass_coll_grt_ST(delta_bias, mass=Mmin_temp)
-            
+            time_finished_hmf_initialization = time.time()
+            print("Time it took from density sampling to hmf initialization: ", time_finished_hmf_initialization - time_finished_densities)
             N_mean_cs = ig_hmf.hmf_integral_gtm(masses, 
                                                 mass_func) * V_bias
             #np.savetxt('/home/inikolic/projects/stochasticity/samples/mass{}.txt'.format(delta_bias), np.array(mass_func))
@@ -151,6 +153,8 @@ def Sampler_ALL(emissivities_x_list,
                                                  mass_coll,
                                                  V_bias, 
                                                  sample_hmf)
+                time_for_halo_sampling = time.time()
+                print("Halo sampling is a bitch, and here's why:", time_for_halo_sampling - time_finished_hmf_initialization)
                 #print("These are the masses:", mhs, flush=True)
             #    np.savetxt('/home/inikolic/projects/stochasticity/samples/halos{}.txt'.format(delta_bias), np.array(mhs))
                 #print("Here's one file for you to analyze", flush=True)
@@ -162,7 +166,7 @@ def Sampler_ALL(emissivities_x_list,
                     raise ValueError("For this iteration sampling halos failed")
                 #assert len(mhs) < 1, "only one mass, aborting"
         time_is_now = time.time()
-        print("Time for mass sampling", time_is_now - time_is_up)
+        #print("Time for mass sampling", time_is_now - time_is_up)
         N_this_iter = int(N_this_iter)
         if not mass_binning:
             N_this_iter = N_mean
@@ -189,7 +193,8 @@ def Sampler_ALL(emissivities_x_list,
         L_UV = np.zeros(shape = N_this_iter)
         L_X = np.zeros(shape = N_this_iter)
         L_LW  = np.zeros(shape = N_this_iter)
-                
+        time_to_start_getting_quantities = time.time()
+        print("Starting the for loop:", time_to_start_getting_quantities - time_for_halo_sampling)        
         for j,mass in enumerate(masses_saved):
             logm = np.log10(mass)            
                 
@@ -201,7 +206,7 @@ def Sampler_ALL(emissivities_x_list,
                                                         )
                     sSFR = sigma_SFR_constant()
                     sMs = sigma_SHMR_constant()
- 
+                    time_inside_loop = time.time() 
                     if sample_emiss:
                         #find a_Lx
                         #find a_SFR
@@ -232,7 +237,6 @@ def Sampler_ALL(emissivities_x_list,
                     logmstar = np.log10(Ms_sample)
                     
                     SFR_samp = 10**(a_SFR * logmstar + b_SFR)
-            
             else:
                 if sample_SFR:
                     a_SFR, b_SFR = sfr_ms_mh_21cmmc(
@@ -249,6 +253,8 @@ def Sampler_ALL(emissivities_x_list,
                                                 get_stellar_mass = False,
                                             )
                     SFR_samp = 10**(a_SFR * logm + b_SFR)
+            time_for_stellar_mass = time.time()
+            print("Getting stellar mass took:", time_for_stellar_mass - time_inside_loop, flush=True)
             ######################LUMINOSITIES PART#############################
             #########################X_RAYS FIRST###############################
             if sample_Ms:
@@ -297,7 +303,8 @@ def Sampler_ALL(emissivities_x_list,
                     
                     a_Lx, b_Lx = Lx_SFR(Z_mean)
                     Lx_sample = 10**(a_Lx * logsfr + b_Lx)
-                
+            time_to_get_X = time.time()
+            print("Time it took to get X-rays", time_to_get_X - time_for_stellar_mass, flush=True)
             #######################END OF LX PART###############################
             ######################START OF UV PART##############################
             #assert a_Lx=='something stupid', "Something stupid happened"
@@ -318,10 +325,12 @@ def Sampler_ALL(emissivities_x_list,
                 Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
                 F_LW = bpass_read.get_LW(Z_sample, 'LW', SFR_samp, z)
 
-
+            time_to_get_LW = time.time()
+            print("Other emissivities took", time_to_get_LW - time_to_get_X)
             ###########GET_BETAS#######
             beta_samples.append(bpass_read.get_beta(Z_sample, SFR_samp, z))
-
+            finally_beta = time.time()
+            print("And finally beta", finally_beta - time_to_get_LW)
 
             Mstar_samples.append(Ms_sample)
             SFR_samples.append(SFR_samp)

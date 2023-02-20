@@ -143,7 +143,6 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     N_actual = np.zeros(nbins)
     m_haloes = []
     counter=0
-    print(nbins, "This is nbins")
     max_iter = 10000
     for iter_num in range(max_iter):
         mbin = 10 ** np.linspace(Mmin, Mmax, nbins + 1)
@@ -164,7 +163,7 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
   
             else:
                 N_actual[counter] = round(N_mean_list)
-                print("This is the <<actual>> number of halos for this iteration, 1 bin case", N_actual[counter])
+                #print("This is the <<actual>> number of halos for this iteration, 1 bin case", N_actual[counter])
             random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter]))
             for index, rn in enumerate(random_number_this_mass_bin):
                 m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
@@ -185,7 +184,7 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
                         N_actual[counter+k] = np.random.poisson(N_mean_list[k])
                     else:
                         N_actual[counter+k] = round(N_mean_list[k])
-                        print("This is the <<actual>> number of halos for this iteration", N_actual[counter+k])
+                        #print("This is the <<actual>> number of halos for this iteration", N_actual[counter+k])
 
                     random_number_this_mass_bin = np.random.uniform(size = int(N_actual[counter+k]))
                     for index, rn in enumerate(random_number_this_mass_bin):
@@ -194,7 +193,7 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
             break
         #if np.sum(m_haloes) < 1e-5 * mass_coll:
         #    raise ValueError("totoal mass of haloes is so low that it could never reach anythin")
-        print("This is the sum of haloes", np.sum(m_haloes), "and this is where I want to be", mass_coll)
+       # print("This is the sum of haloes", np.sum(m_haloes), "and this is where I want to be", mass_coll)
         counter+=nbins
         if nbins>1:
             nbins = int(nbins/2)
