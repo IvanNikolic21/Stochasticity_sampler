@@ -188,6 +188,7 @@ def Sampler_ALL(emissivities_x_list,
         metalicity_samples = []
         SFR_samples = []
         beta_samples = []
+        SFH_samples = []
 
         tot_mass[i] = np.sum(masses_saved)
         L_UV = np.zeros(shape = N_this_iter)
@@ -261,9 +262,10 @@ def Sampler_ALL(emissivities_x_list,
                 if sample_emiss :
                     Z_mean = metalicity_from_FMR(Ms_sample, SFR_samp)
                     sigma_Z = sigma_metalicity_const()
-                    Z_mean -= np.log(10) * sigma_Z ** 2 / 2
+                    #Z_mean -= np.log(10) * sigma_Z ** 2 / 2   #I don't think metalicity should be lognormal
 
-                    Z_sample = 10 ** (normal((np.log10(Z_mean)), sigma_Z))
+                    #Z_sample = 10 ** (normal((np.log10(Z_mean)), sigma_Z))
+                    Z_sample = normal(Z_mean, sigma_Z)
                     logsfr = np.log10(SFR_samp)
 
                     a_Lx, b_Lx = Lx_SFR(Z_sample)
@@ -311,24 +313,24 @@ def Sampler_ALL(emissivities_x_list,
             if not sample_Ms:
                 
                 Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
-                F_UV = bpass_read.get_UV(Z_sample, 'UV', SFR_samp,z)
+                F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z)
                 
             else:
-                F_UV = bpass_read.get_UV(Z_sample, 'UV', SFR_samp,z)
+                F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z)
 
             #######################END OF UV PART###############################
             #####################START OF LW PART###############################
             if sample_Ms:
-                F_LW = bpass_read.get_LW(Z_sample, 'LW', SFR_samp, z)
+                F_LW = bpass_read.get_LW(Z_sample, Ms_sample, SFR_samp, z)
             
             else:
                 Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
-                F_LW = bpass_read.get_LW(Z_sample, 'LW', SFR_samp, z)
+                F_LW = bpass_read.get_LW(Z_sample, Ms_sample, SFR_samp, z)
 
             time_to_get_LW = time.time()
             print("Other emissivities took", time_to_get_LW - time_to_get_X)
             ###########GET_BETAS#######
-            beta_samples.append(bpass_read.get_beta(Z_sample, SFR_samp, z))
+            beta_samples.append(bpass_read.get_beta(Z_sample, SFR_samp, Ms_sample, z))
             finally_beta = time.time()
             print("And finally beta", finally_beta - time_to_get_LW)
 
@@ -353,8 +355,10 @@ def Sampler_ALL(emissivities_x_list,
             elif f_esc_option == 'ksz_inference':
                 f_esc = fesc_distr(f_esc_option,mass)
                 F_UV *= f_esc
+
+            SFH_samples.append(bpass_read.SFH)
                 
-                
+
             L_X[j] = Lx_sample
             L_UV[j] = F_UV
             L_LW[j] = F_LW
@@ -366,6 +370,11 @@ def Sampler_ALL(emissivities_x_list,
         container.add_L_LW(L_LW)
         container.add_L_UV(L_UV)
 
+        max_len_SFH = max([len(i) for i in SFH_samples])
+        SFH_array = np.zeros((N_iter, max_len_SFH))
+        for i in range(N_iter):
+            SFH_array[i,:len(SFH_samples[i])] = SFH_samples[i]
+        container.add_SFH(SFH_array)
         #print("Here are the luminosities", L_X, "and here's the number of them", np.shape(L_X))
         emissivities_x[i] = np.sum(L_X)
         emissivities_uv[i] = np.sum(L_UV)

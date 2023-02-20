@@ -8,6 +8,8 @@ import numpy as np
 from hmf import integrate_hmf as ig_hmf
 from scipy import integrate
 from astropy import units as u
+from numpy.random import normal
+
 
 from scipy.interpolate import InterpolatedUnivariateSpline as _spline
 import scipy.integrate as intg
@@ -246,3 +248,25 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     N_this_iter = len(m_haloes[index:])
     return N_this_iter, m_haloes[index:]
 
+def get_SFH(Mstar, SFR, galaxy_age):
+    """
+    Get SFH that is based on the "mean SFR" by the SFR - Mh relation, such that
+    it obeys Mstellar.
+    """
+    sigma_SFH = 0.2
+    ages = np.array([0] + [10**(6.05 + 0.1 * i) for i in range(1,52)]) #from BPASS
+
+    #simple model has SFR variance constant with age. The only concern will be that stellar mass is not overproducede in galaxy_age.
+    SFH = np.zeros(len(ages)-1)
+    total_mass = 0.0
+    for index, age in enumerate(ages[:-1]):
+        if age>galaxy_age:
+            pass
+            #not sure what to do about this
+        SFH[index] =  10**(normal((np.log10(SFR)), sigma_SFH))
+        total_mass+= SFH[index] * (ages[index+1]-age)
+        if total_mass >= Mstar:
+            galaxy_age = age
+            break #galaxy will actually be younger because of a significant star-burst
+
+    return SFH, galaxy_age

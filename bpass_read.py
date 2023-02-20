@@ -8,6 +8,7 @@ from multiprocessing import Pool
 from astropy import constants as const
 
 from scaling import OH_to_mass_fraction
+from common_stuff import get_SFH
 
 def reader(name):
     return open(name).read().split('\n')
@@ -53,7 +54,7 @@ class bpass_loader:
         
         self.t_star = 0.36
         
-    def get_UV(self, metal, band, SFR, z):
+    def get_UV(self, metal, Mstar, SFR, z):
         metal = OH_to_mass_fraction(metal)
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
@@ -76,13 +77,16 @@ class bpass_loader:
             ages_UV=self.ages-1
         
         mburst = SFR / 10**6
+
+        self.SFH = get_SFH(Mstar, SFR, t_age)
+        self.SFH /= 10**6
         
         wv_UV = self.wv[1550:1650]
         UV_p = np.zeros(self.ages-1)
         UV_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
-            UV_p[i] = simps(SEDp[i][1549:1649], wv_UV) * mburst * (self.ag[i+1]-self.ag[i])# * const.c.cgs.value / (1e-8)
-            UV_n[i] = simps(SEDp[i][1549:1649], wv_UV) * mburst * (self.ag[i+1]-self.ag[i])# * const.c.cgs.value / (1e-8)
+            UV_p[i] = simps(SEDp[i][1549:1649], wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])# * const.c.cgs.value / (1e-8)
+            UV_n[i] = simps(SEDp[i][1549:1649], wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])# * const.c.cgs.value / (1e-8)
         
         if ages_UV!=(self.ages):
             missing_piecep = np.interp(t_age, self.ag[1:], UV_p, right=0)
@@ -101,7 +105,7 @@ class bpass_loader:
         
         return UV_final
     
-    def get_LW(self, metal, band, SFR, z):
+    def get_LW(self, metal, Mstar, SFR, z):
         metal=OH_to_mass_fraction(metal)
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
@@ -124,13 +128,14 @@ class bpass_loader:
             ages_LW=self.ages-1
         
         mburst = SFR / 10**6
+
         
         wv_LW = self.wv[911:1107]
         LW_p = np.zeros(self.ages-1)
         LW_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
-            LW_p[i] = simps(SEDp[i][911:1107], wv_LW) * mburst * (self.ag[i+1]- self.ag[i])
-            LW_n[i] = simps(SEDn[i][911:1107], wv_LW) * mburst * (self.ag[i+1]- self.ag[i])
+            LW_p[i] = simps(SEDp[i][911:1107], wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
+            LW_n[i] = simps(SEDn[i][911:1107], wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
         
         if ages_LW!=(self.ages):
             missing_piecep = np.interp(t_age, self.ag[1:], LW_p, right=0)
@@ -149,7 +154,7 @@ class bpass_loader:
         
         return LW_final
 
-    def get_beta(self, metal, SFR, z):
+    def get_beta(self, metal, SFR, Mstar, z):
         metal = OH_to_mass_fraction(metal)
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
@@ -179,8 +184,8 @@ class bpass_loader:
 
         for i in range(self.ages-1):
 
-            bet_p[i] = np.array(SEDp[i][1215:3199]) * mburst * (self.ag[i+1]- self.ag[i])
-            bet_n[i] = np.array(SEDn[i][1215:3199]) * mburst * (self.ag[i+1]- self.ag[i])
+            bet_p[i] = np.array(SEDp[i][1215:3199]) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
+            bet_n[i] = np.array(SEDn[i][1215:3199]) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
         bet_p_to_sum = []
         bet_n_to_sum = []
         if ages_bet!=(self.ages):
