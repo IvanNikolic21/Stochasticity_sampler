@@ -5,9 +5,7 @@ from helpers import RtoM, nonlin
 from astropy.cosmology import Planck15 as cosmo
 import hmf
 import numpy as np
-from hmf import integrate_hmf as ig_hmf
 from scipy import integrate
-from astropy import units as u
 from numpy.random import normal
 from astropy.cosmology import z_at_value
 from astropy import units
@@ -135,7 +133,7 @@ def _sample_densities(z, N, Mmin, Mmax, dlog10m, R_bias):
     
     return delta_list
 
-def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
+def _sample_halos_old(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     """
         sample halo masses from the given hmf.
     """
@@ -248,6 +246,162 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
             break
     N_this_iter = len(m_haloes[index:])
     return N_this_iter, m_haloes[index:]
+
+def _sample_halos(
+        mx,
+        mf,
+        Mmin = 5.,
+        Mmax = 15.,
+        Vb = 4. * np.pi / 3. * 5.0 ** 3,
+        mode = 'binning',
+        Poisson = True,
+        nbins = 10,
+        mass_coll = None,
+        mass_range = 0.1,
+        max_iter = 10,
+):
+    """
+    Sample halos using one of the two modes, either sampling a fixed number of
+    haloes in a given number of mass bins (controlled by 'mode' parameter, as
+    well as 'Poisson' and 'nbins'), or by sampling fixing the mass (controlled
+    by 'mode' parameter, as well as 'mass_coll', 'max_iter' and 'mass_range') .
+
+    Input
+    ----------
+    mx : numpy.ndarray-like,
+        masses for which the hmf is given. Obtained either through chmf given in
+        this package, or hmf.py package hmf.m parameter.
+    mf : numpy.ndarray-like
+        mass function. Obtained either through chmf given in this package, or
+        hmf.py package hmf.dndm parameter.
+    Mmin : float,
+        minimal mass to sample from. In log-space in solar masses. It's better
+        to put your own value since a value of 10**5 is relatively small and
+        will give a large number of halos, taking a long time. Default: 5.0
+    Mmax : float,
+        maximum mass to sample from. In log-space in solar masses.
+        Default : 15.0
+    Vb : float,
+        Volume of the biased region. Given in cMpc**3. Note that this is the
+        Eulerian region so it automatically includes the (1+delta)**3 factor
+        since hmf is given in a Lagrangian region. Default is a sphere of 5cMpc
+        radius.
+    mode : 'string' ['binning' or 'mass']
+        Mode in which halo sampling is performed. Either the hmf is split into
+        bins and an expected number of haloes is sampled, or haloes are sampled
+        to match the expected collapsed fraction. More details are presented in
+        Nikolić+in prep, b. Default is 'binning'
+    Poisson : boolean,
+        Whether to Poisson sample the expected number of haloes in each bin.
+        Default is True. Only applicable is mode is 'binning'.
+    nbins : integer,
+        Number of mass bins to sample from. Default is 10. Only applicable if
+        mode is 'binning'.
+    mass_coll : float,
+        Collapsed mass in a given region. Default is None as default mode is
+        'binning'. Only applicable is mode is 'mass'.
+    mass_range : float,
+        Mass range for which the sample is acceptable. Given in log-space, that
+        is it represents order-of-magnitude for which the sample is adequate.
+        Default is 0.1
+    max_iter : integer,
+        Number of times mass sampling will be performed. Default is 10. Usually
+        if 10 is not enough, try changing your 'mass_range'. For high redshifts
+        and/or small regions,no haloes might be a preferred solution to
+        generating haloes for every region. Key here is that haloes are defined
+        to be star-forming!
+
+    Output
+    ----------
+    N : integer,
+        Number of sampled haloes.
+    m_haloes : numpy.ndarray-like,
+        halo masses of the sampled haloes.
+    """
+
+    m_haloes = []
+
+    if mode == 'binning':
+        if nbins == 1 :
+            inds = [b for b, m in enumerate(mx) if m>10**Mmin and m<10**Mmax]
+
+            if len(inds) > 4:
+                N_cs = hmf_integral_gtm(mx[inds], mf[inds]) * Vb
+                N_mean_list = N_cs[0]
+                N_cs = N_cs / N_cs[0]
+            else:
+                raise ValueError(
+                    "You have 1 bin but less than 4 hmf elements inside it. Select a more detailed hmf or increase you limits!")
+
+            if Poisson:
+                N_actual = np.random.poisson(N_mean_list)
+
+            else:
+                N_actual = round(N_mean_list)
+
+            rn_now = np.random.uniform(size = int(N_actual))
+            for index, rn in enumerate(rn_now):
+                m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+
+        else:
+            N_actual = np.zeros(nbins)
+            N_mean_list = np.zeros(nbins)
+            mbin = 10 ** np.linspace(Mmin, Mmax, nbins +1)
+
+            for k in range(nbins):
+                inds = [b for b, m in enumerate(mx) if
+                        m > mbin[k] and m < mbin[k + 1]]
+                if len(inds) >= 4:
+                    N_cs = hmf_integral_gtm(mx[inds], mf[inds]) * Vb
+                    N_mean_list[k] = N_cs[0]
+                    N_cs = N_cs / N_cs[0]
+                    # except:
+                else:
+                    continue
+
+                if Poisson:
+                    N_actual[k] = np.random.poisson(N_mean_list[k])
+                else:
+                    N_actual[k] = round(N_mean_list[k])
+
+                rn_now = np.random.uniform(size = int(N_actual[k]))
+                for index, rn in enumerate(rn_now):
+                    m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+
+    else:
+        inds = [b for b, m in enumerate(mx) if
+                m > 10 ** Mmin and m < 10 ** Mmax]
+
+        if len(inds) > 4:
+            N_cs = hmf_integral_gtm(mx[inds], mf[inds]) * Vb
+            N_mean_list = N_cs[0]
+            N_cs = N_cs / N_cs[0]
+        else:
+            raise ValueError(
+                "You have 1 bin but less than 4 hmf elements inside it. Select a more detailed hmf or increase you limits!")
+
+        N_actual = round(N_mean_list)
+        rn_now = np.random.uniform(size=int(N_actual))
+        for index, rn in enumerate(rn_now):
+            m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+
+        m_haloes = np.array(m_haloes)
+        counter = 0
+        while counter < max_iter:
+            if np.log10(np.sum(m_haloes)) > np.log10(mass_coll) + mass_range:
+                while np.log10(np.sum(m_haloes)) > np.log10(mass_coll) + mass_range:
+                    m_haloes = m_haloes[:-1]
+
+            elif np.log10(np.sum(m_haloes)) < np.log10(mass_coll) - mass_range:
+                while np.log10(np.sum(m_haloes)) < np.log10(mass_coll) - mass_range:
+                    rn_new = np.random.uniform(size = 1)
+                    m_haloes = np.append(m_haloes, np.interp(rn_new, np.flip(N_cs), np.flip(mx[inds])))
+            elif np.log10(np.sum(m_haloes)) > np.log10(mass_coll) - mass_range and np.log10(np.sum(m_haloes)) < np.log10(mass_coll) + mass_range:
+                break
+
+    N = len(m_haloes)
+    return N, np.array(m_haloes)
+
 
 def get_SFH_stoch_const(Mstar, SFR, galaxy_age):
     """

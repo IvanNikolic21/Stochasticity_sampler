@@ -146,14 +146,19 @@ def Sampler_ALL(emissivities_x_list,
                 #print( len(masses), sep=", ")
                 #print( len(mass_func), sep=", ")
                 #print(mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
-                N_this_iter, mhs = _sample_halos(Mmin_temp, 
-                                                 log10_Mmax, 
-                                                 mass_binning,
-                                                 masses[:len(mass_func)], 
-                                                 mass_func, 
-                                                 mass_coll,
-                                                 V_bias, 
-                                                 sample_hmf)
+                N_this_iter, mhs = _sample_halos(mass_binning,
+                                                 masses[:len(mass_func)],
+                                                 Mmin_temp,
+                                                 log10_Mmax,
+                                                 V_bias,
+                                                 mode = 'binning',
+                                                 Poisson = sample_hmf,
+                                                 nbins = 10,
+                                                 mass_coll = None,
+                                                 mass_range = None,
+                                                 max_iter = None,
+                                                 )
+
                 time_for_halo_sampling = time.time()
                 print("Halo sampling is a bitch, and here's why:", time_for_halo_sampling - time_finished_hmf_initialization)
                 #print("These are the masses:", mhs, flush=True)
