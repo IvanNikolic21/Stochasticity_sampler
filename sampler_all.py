@@ -8,7 +8,7 @@ from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
 from scaling import sigma_Lx_const, ms_mh_21cmmc, Brorby_lx
 from chmf import chmf
 from helpers import RtoM, nonlin
-from common_stuff import _sample_halos, _sample_densities
+from common_stuff import _sample_halos, _sample_densities, SFH_sampler
 from bpass_read import bpass_loader
 import numpy as np
 from fesc import fesc_distr
@@ -40,7 +40,7 @@ def Sampler_ALL(emissivities_x_list,
     time_enter_sampler = time.time()
     M_turn = 5*10**7  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
-
+    SFH_samp = SFH_sampler(z)
     ########################INITIALIZE SOME SCALING LAWS########################
     np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))    
 
@@ -52,7 +52,7 @@ def Sampler_ALL(emissivities_x_list,
     )
     container.create_file()
     container.create_redshift()
-
+    container.add_Rbias(R_bias)
     if sample_densities:
 
         delta_list = _sample_densities(z, 
@@ -128,16 +128,17 @@ def Sampler_ALL(emissivities_x_list,
             mass_func=mass_func[:index_to_stop]
             #######################TEMPORARY MINIMUM MASS#######################
             Mmin_temp = 7.6
-           
+            
             mass_coll = hmf_this.mass_coll_grt_ST(delta_bias, mass=Mmin_temp)
             time_finished_hmf_initialization = time.time()
+            print(masses, mass_func)
             print("Time it took from density sampling to hmf initialization: ", time_finished_hmf_initialization - time_finished_densities)
             N_mean_cs = ig_hmf.hmf_integral_gtm(masses, 
                                                 mass_func) * V_bias
             #np.savetxt('/home/inikolic/projects/stochasticity/samples/mass{}.txt'.format(delta_bias), np.array(mass_func))
-            N_mean = int((N_mean_cs)[0])
-            N_cs_norm = N_mean_cs/N_mean_cs[0]
-
+            #N_mean = int((N_mean_cs)[0])
+            #N_cs_norm = N_mean_cs/N_mean_cs[0]
+            print(N_mean_cs)
             time_is_up = time.time()
             if mass_binning:
      #           print("starting to sample the halos for the first time", flush=True)
@@ -313,10 +314,10 @@ def Sampler_ALL(emissivities_x_list,
             if not sample_Ms:
                 
                 Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
-                F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z)
+                F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z, SFH_samp = SFH_samp)
                 
             else:
-                F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z)
+                F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z, SFH_samp=SFH_samp)
 
             #######################END OF UV PART###############################
             #####################START OF LW PART###############################
@@ -370,10 +371,10 @@ def Sampler_ALL(emissivities_x_list,
         container.add_L_LW(L_LW)
         container.add_L_UV(L_UV)
 
-        max_len_SFH = max([len(i) for i in SFH_samples])
-        SFH_array = np.zeros((N_iter, max_len_SFH))
-        for i in range(N_iter):
-            SFH_array[i,:len(SFH_samples[i])] = SFH_samples[i]
+        max_len_SFH = max([len(haj) for haj in SFH_samples])
+        SFH_array = np.zeros((len(SFH_samples), max_len_SFH))
+        for haj in range(len(SFH_samples)):
+            SFH_array[haj,:len(SFH_samples[haj])] = SFH_samples[haj]
         container.add_SFH(SFH_array)
         #print("Here are the luminosities", L_X, "and here's the number of them", np.shape(L_X))
         emissivities_x[i] = np.sum(L_X)

@@ -9,7 +9,8 @@ from hmf import integrate_hmf as ig_hmf
 from scipy import integrate
 from astropy import units as u
 from numpy.random import normal
-
+from astropy.cosmology import z_at_value
+from astropy import units
 
 from scipy.interpolate import InterpolatedUnivariateSpline as _spline
 import scipy.integrate as intg
@@ -49,7 +50,7 @@ def hmf_integral_gtm(M, dndm, mass_density=False):
     m = M[np.logical_not(np.isnan(dndm))]
     dndm = dndm[np.logical_not(np.isnan(dndm))]
     dndlnm = m * dndm
-
+    print(m, dndm, dndlnm)
     if len(m) < 4:
         raise NaNException(
             "There are too few real numbers in dndm: len(dndm) = %s, #NaN's = %s"
@@ -248,12 +249,12 @@ def _sample_halos(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     N_this_iter = len(m_haloes[index:])
     return N_this_iter, m_haloes[index:]
 
-def get_SFH(Mstar, SFR, galaxy_age):
+def get_SFH_stoch_const(Mstar, SFR, galaxy_age):
     """
     Get SFH that is based on the "mean SFR" by the SFR - Mh relation, such that
     it obeys Mstellar.
     """
-    sigma_SFH = 0.2
+    sigma_SFH = 0.5
     ages = np.array([0] + [10**(6.05 + 0.1 * i) for i in range(1,52)]) #from BPASS
 
     #simple model has SFR variance constant with age. The only concern will be that stellar mass is not overproducede in galaxy_age.
@@ -270,3 +271,61 @@ def get_SFH(Mstar, SFR, galaxy_age):
             break #galaxy will actually be younger because of a significant star-burst
 
     return SFH, galaxy_age
+
+def get_SFH_exp(Mstar, SFR, z):
+    """
+    Get SFH is based on the t_STAR parameter and exponental SFH.
+    Single instance version.
+    """
+    Hubble_now = cosmo.H(z).to(units.yr**-1).value
+    t_STAR = Mstar / (SFR * Hubble_now**-1)
+    print("This is t_STAR", t_STAR)    
+    #setting maximum time for BPASS
+    ages = np.array([0] + [10**(6.05 + 0.1 * i) for i in range(1,52)])
+    maximum_time = cosmo.lookback_time(30).to(units.yr).value - cosmo.lookback_time(z).to(units.yr).value
+    print("maximum_time is", maximum_time, cosmo.lookback_time(30))
+    SFH = []
+    
+    for index_age, age in enumerate(ages):
+        z_age = z_at_value(cosmo.lookback_time, cosmo.lookback_time(z) + age * units.yr)
+        print(z_age)
+        Hubble_age = cosmo.H(z_age).to(units.yr**-1).value
+        print(Hubble_age)
+        Hubble_integral = intg.quad(lambda x:(cosmo.H(z_at_value(cosmo.lookback_time, cosmo.lookback_time(z) + x* units.Myr)).to(units.Myr**-1).value), 0, age / 10**6)[0]
+        exp_term = np.exp(-(1/t_STAR) * Hubble_integral )
+        SFH.append( SFR * exp_term * Hubble_age / Hubble_now   )
+        if age> maximum_time:
+            index_age-=1
+            break
+    print("This is SFR", SFR, "and this SFH", SFH) 
+    return SFH, index_age
+
+class SFH_sampler:
+    """
+        Class that contains Hubble integrals and derivations necessary for SFH
+        calculation. The only reason this is a class is the speed-up.
+    """
+    def __init__(self,z):
+        self.Hubble_now = cosmo.H(z).to(units.yr**-1).value
+        self.ages_SFH = np.array([0] + [10**(6.05 + 0.1 * i) for i in range(1,52)])
+        self.maximum_time = cosmo.lookback_time(30).to(units.yr).value - cosmo.lookback_time(z).to(units.yr).value
+        self.Hubble_integral = []
+        self.Hubble_ratios = []
+        for self.index_age, age in enumerate(self.ages_SFH):
+            z_age = z_at_value(cosmo.lookback_time, cosmo.lookback_time(z) + age * units.yr)
+            Hubble_age = cosmo.H(z_age).to(units.yr**-1).value
+            self.Hubble_integral.append(intg.quad(lambda x:(cosmo.H(z_at_value(cosmo.lookback_time, cosmo.lookback_time(z) + x* units.Myr)).to(units.Myr**-1).value), 0, age / 10**6)[0])
+            self.Hubble_ratios.append(Hubble_age / self.Hubble_now)
+            if age>self.maximum_time:
+                self.index_age -= 1
+                break
+        self.Hubble_integral = np.array(self.Hubble_integral)
+        self.Hubble_ratios = np.array(self.Hubble_ratios)
+        
+    def get_SFH_exp(self, Mstar, SFR):
+        """
+            Generate SFH using Mstar and SFR.
+        """
+        t_STAR = Mstar / (SFR * self.Hubble_now**-1)
+        SFH = SFR * np.exp(-(1/t_STAR) * self.Hubble_integral) * self.Hubble_ratios
+        return SFH, self.index_age

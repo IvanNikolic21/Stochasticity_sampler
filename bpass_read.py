@@ -8,7 +8,7 @@ from multiprocessing import Pool
 from astropy import constants as const
 
 from scaling import OH_to_mass_fraction
-from common_stuff import get_SFH
+from common_stuff import get_SFH_stoch_const, get_SFH_exp, SFH_sampler
 
 def reader(name):
     return open(name).read().split('\n')
@@ -54,7 +54,7 @@ class bpass_loader:
         
         self.t_star = 0.36
         
-    def get_UV(self, metal, Mstar, SFR, z):
+    def get_UV(self, metal, Mstar, SFR, z, SFH_samp = None):
         metal = OH_to_mass_fraction(metal)
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
@@ -67,36 +67,40 @@ class bpass_loader:
         SEDp = self.SEDS[i-1]
         SEDn = self.SEDS[i]
         
-        t_age = self.t_star * (cosmo.H(z).to(u.yr**(-1)).value)**-1
+        #t_age = self.t_star * (cosmo.H(z).to(u.yr**(-1)).value)**-1
         
-        for index, age in enumerate(self.ag):
-            if age > t_age:
-                ages_UV = index -1
-                break
-        if index==self.ages-1:
-            ages_UV=self.ages-1
+        #for index, age in enumerate(self.ag):
+        #    if age > t_age:
+        #        ages_UV = index -1
+        #        break
+        #if index==self.ages-1:
+        #    ages_UV=self.ages-1
         
         mburst = SFR / 10**6
-
-        self.SFH = get_SFH(Mstar, SFR, t_age)
+        if SFH_samp is None:
+            SFH_short, self.index_age =  get_SFH_exp(Mstar, SFR, z)
+        else:
+            SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
+        self.SFH = np.zeros(self.ages-1)
+        self.SFH[:len(SFH_short)] = np.array(SFH_short)
         self.SFH /= 10**6
         
-        wv_UV = self.wv[1550:1650]
+        wv_UV = self.wv[1450:1550]
         UV_p = np.zeros(self.ages-1)
         UV_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
-            UV_p[i] = simps(SEDp[i][1549:1649], wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])# * const.c.cgs.value / (1e-8)
-            UV_n[i] = simps(SEDp[i][1549:1649], wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])# * const.c.cgs.value / (1e-8)
+            UV_p[i] = simps(np.array(SEDp[i][1449:1549]), wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])
+            UV_n[i] = simps(np.array(SEDp[i][1449:1549]), wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])
         
-        if ages_UV!=(self.ages):
-            missing_piecep = np.interp(t_age, self.ag[1:], UV_p, right=0)
-            missing_piecen = np.interp(t_age, self.ag[1:], UV_n, right=0)
+        #if index_age!=(self.ages-1):
+        #    missing_piecep = np.interp(self.ag[index_age], self.ag[1:], UV_p, right=0)
+        #    missing_piecen = np.interp(self.ag[index_age], self.ag[1:], UV_n, right=0)
 
-            UV_p_to_sum = np.append(UV_p[:ages_UV], missing_piecep)
-            UV_n_to_sum = np.append(UV_n[:ages_UV], missing_piecen)
+        #    UV_p_to_sum = np.append(UV_p[:ages_UV], missing_piecep)
+        #    UV_n_to_sum = np.append(UV_n[:ages_UV], missing_piecen)
         
-        FUV_p = np.sum(UV_p_to_sum)
-        FUV_n = np.sum(UV_n_to_sum)
+        FUV_p = np.sum(UV_p)
+        FUV_n = np.sum(UV_n)
         
         UV_final = np.interp(metal, [met_prev, met_next], [FUV_p, FUV_n])
 
@@ -118,14 +122,14 @@ class bpass_loader:
         SEDp = self.SEDS[i-1]
         SEDn = self.SEDS[i]
         
-        t_age = self.t_star * (cosmo.H(z).to(u.yr**(-1)).value)**-1
+       # t_age = self.t_star * (cosmo.H(z).to(u.yr**(-1)).value)**-1
         
-        for index, age in enumerate(self.ag):
-            if age > t_age:
-                ages_LW = index -1
-                break
-        if index==self.ages-1:
-            ages_LW=self.ages-1
+       # for index, age in enumerate(self.ag):
+       #     if age > t_age:
+       #         ages_LW = index -1
+       #         break
+       # if index==self.ages-1:
+       #     ages_LW=self.ages-1
         
         mburst = SFR / 10**6
 
@@ -134,18 +138,18 @@ class bpass_loader:
         LW_p = np.zeros(self.ages-1)
         LW_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
-            LW_p[i] = simps(SEDp[i][911:1107], wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
-            LW_n[i] = simps(SEDn[i][911:1107], wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
+            LW_p[i] = simps(np.array(SEDp[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
+            LW_n[i] = simps(np.array(SEDn[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
         
-        if ages_LW!=(self.ages):
-            missing_piecep = np.interp(t_age, self.ag[1:], LW_p, right=0)
-            missing_piecen = np.interp(t_age, self.ag[1:], LW_n, right=0)
+        #if ages_LW!=(self.ages):
+        #    missing_piecep = np.interp(t_age, self.ag[1:], LW_p, right=0)
+        #    missing_piecen = np.interp(t_age, self.ag[1:], LW_n, right=0)
 
-            LW_p_to_sum = np.append(LW_p[:ages_LW], missing_piecep)
-            LW_n_to_sum = np.append(LW_n[:ages_LW], missing_piecen)
+         #   LW_p_to_sum = np.append(LW_p[:ages_LW], missing_piecep)
+         #   LW_n_to_sum = np.append(LW_n[:ages_LW], missing_piecen)
         
-        FLW_p = np.sum(LW_p_to_sum)
-        FLW_n = np.sum(LW_n_to_sum)
+        FLW_p = np.sum(LW_p)
+        FLW_n = np.sum(LW_n)
 
         LW_final = np.interp(metal, [met_prev, met_next], [FLW_p, FLW_n])
         
@@ -167,14 +171,14 @@ class bpass_loader:
         SEDp = self.SEDS[i - 1]
         SEDn = self.SEDS[i]
 
-        t_age = self.t_star * (cosmo.H(z).to(u.yr ** (-1)).value) ** -1
+        #t_age = self.t_star * (cosmo.H(z).to(u.yr ** (-1)).value) ** -1
 
-        for index, age in enumerate(self.ag):
-            if age > t_age:
-                ages_bet = index - 1
-                break
-        if index == self.ages - 1:
-            ages_bet = self.ages - 1
+        #for index, age in enumerate(self.ag):
+        #    if age > t_age:
+        #        ages_bet = index - 1
+        #        break
+        #if index == self.ages - 1:
+        #    ages_bet = self.ages - 1
 
         mburst = SFR / 10 ** 6
 
@@ -183,27 +187,27 @@ class bpass_loader:
         bet_n = np.zeros((self.ages - 1, len(wv_bet)))
 
         for i in range(self.ages-1):
-
             bet_p[i] = np.array(SEDp[i][1215:3199]) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
             bet_n[i] = np.array(SEDn[i][1215:3199]) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
+        
         bet_p_to_sum = []
         bet_n_to_sum = []
-        if ages_bet!=(self.ages):
-            for wv_ind in range(len(wv_bet)):
-                missing_piecep = np.interp(t_age, self.ag[1:], bet_p[:,wv_ind], right=0)
-                missing_piecen = np.interp(t_age, self.ag[1:], bet_n[:,wv_ind], right=0)
+        #if ages_bet!=(self.ages):
+        #    for wv_ind in range(len(wv_bet)):
+        #        missing_piecep = np.interp(t_age, self.ag[1:], bet_p[:,wv_ind], right=0)
+        #        missing_piecen = np.interp(t_age, self.ag[1:], bet_n[:,wv_ind], right=0)
 
-                bet_p_to_sum.append(np.append(bet_p[:ages_bet, wv_ind], missing_piecep))
-                bet_n_to_sum.append(np.append(bet_n[:ages_bet, wv_ind], missing_piecen))
-        bet_p_to_sum = np.array(bet_p_to_sum)
-        bet_n_to_sum = np.array(bet_n_to_sum)
-        SED_summed_p = np.sum(bet_p_to_sum, axis=1)
-        SED_summed_n = np.sum(bet_n_to_sum, axis=1)
-        #print(np.shape(SED_summed_p))
+         #       bet_p_to_sum.append(np.append(bet_p[:ages_bet, wv_ind], missing_piecep))
+         #       bet_n_to_sum.append(np.append(bet_n[:ages_bet, wv_ind], missing_piecen))
+        #bet_p_to_sum = np.array(bet_p_to_sum)
+        #bet_n_to_sum = np.array(bet_n_to_sum)
+        SED_summed_p = np.sum(bet_p, axis=0)
+        SED_summed_n = np.sum(bet_n, axis=0)
+        print(np.shape(SED_summed_p))
         SED_interp = np.zeros(np.shape(SED_summed_p)[0])
         for wv_ind in range(np.shape(SED_summed_p)[0]):
             SED_interp[wv_ind] = np.interp(metal, [met_prev, met_next], [SED_summed_p[wv_ind], SED_summed_n[wv_ind]])
-
+        
         beta_slope, _ = np.polyfit(np.log10(wv_bet),np.log10(SED_interp), 1)
 
         return beta_slope

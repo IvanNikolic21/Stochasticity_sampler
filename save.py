@@ -21,6 +21,10 @@ class HdF5Saver:
         f = h5py.File(self.filename, 'a')
         f.create_group(str(self.redshift))
         f.close()
+    def add_Rbias(self, Rbias):
+        f = h5py.File(self.filename, 'a')
+        f.attrs["Rbias"] = Rbias
+        f.close()
 
     def add_X(self, X):
         f = h5py.File(self.filename, 'a')
@@ -142,7 +146,7 @@ class HdF5Saver:
         f = h5py.File(self.filename, 'a')
         f[str(self.redshift)][str(self.delta)].create_dataset(
             "SFH",
-            dytpe = "float",
+            dtype = "float",
             data = SFH,
             compression = 'gzip',
             compression_opts = 9,
