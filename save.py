@@ -132,6 +132,17 @@ class HdF5Saver:
             compression_opts = 9,
         )
 
+    def add_L_LyC(self, L_lyc):
+        f = h5py.File(self.filename, 'a')
+        f[str(self.redshift)][str(self.delta)].create_dataset(
+            "L_LyC",
+            dtype = "float",
+            data = L_lyc,
+            compression = 'gzip',
+            compression_opts = 9,
+        )
+
+
     def add_beta(self, beta):
         f = h5py.File(self.filename, 'a')
         f[str(self.redshift)][str(self.delta)].create_dataset(

@@ -40,6 +40,6 @@ def fesc_distr(option = 'binary', Mh = None):
         
         f_esc_mean = f_esc10 * (Mh / 10**10) ** alpha_esc
         logf_esc_mean = np.log10(f_esc_mean) - np.log(10) * scat_value**2 * 0.5
-        return 10**np.random.normal(logf_esc_mean, scat_value)
+        return logf_esc_mean, scat_value
 
         

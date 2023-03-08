@@ -320,7 +320,7 @@ def _sample_halos(
     """
 
     m_haloes = []
-
+    print(mode)
     if mode == 'binning':
         if nbins == 1 :
             inds = [b for b, m in enumerate(mx) if m>10**Mmin and m<10**Mmax]
@@ -363,7 +363,7 @@ def _sample_halos(
                     N_actual[k] = np.random.poisson(N_mean_list[k])
                 else:
                     N_actual[k] = round(N_mean_list[k])
-
+                print(N_actual)
                 rn_now = np.random.uniform(size = int(N_actual[k]))
                 for index, rn in enumerate(rn_now):
                     m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
@@ -454,7 +454,7 @@ def get_SFH_exp(Mstar, SFR, z):
     print("This is SFR", SFR, "and this SFH", SFH) 
     return SFH, index_age
 
-class SFH_sampler:
+class SFH_sampler_old:
     """
         Class that contains Hubble integrals and derivations necessary for SFH
         calculation. The only reason this is a class is the speed-up.
@@ -483,3 +483,35 @@ class SFH_sampler:
         t_STAR = Mstar / (SFR * self.Hubble_now**-1)
         SFH = SFR * np.exp(-(1/t_STAR) * self.Hubble_integral) * self.Hubble_ratios
         return SFH, self.index_age
+
+class SFH_sampler:
+    """
+        Class that contains Hubble integrals and derivations necessary for SFH
+        calculation. The only reason this is a class is the speed-up.
+    """
+    def __init__(self,z):
+        self.Hubble_now = cosmo.H(z).to(units.yr**-1).value
+        self.ages_SFH = np.array([0] + [10**(6.05 + 0.1 * i) for i in range(1,52)])
+        self.maximum_time = cosmo.lookback_time(30).to(units.yr).value - cosmo.lookback_time(z).to(units.yr).value
+        self.Hubbles = [self.Hubble_now]
+        for self.index_age, age in enumerate(self.ages_SFH):
+            if age>self.maximum_time:
+                self.index_age -= 1
+                break
+            z_age = z_at_value(cosmo.lookback_time, cosmo.lookback_time(z) + age * units.yr)
+            Hubble_age = cosmo.H(z_age).to(units.yr**-1).value
+            self.Hubbles.append(Hubble_age)
+        self.Hubbles = np.array(self.Hubbles)
+
+    def get_SFH_exp(self, Mstar, SFR):
+        """
+            Generate SFH using Mstar and SFR.
+        """
+        t_STAR = Mstar / (SFR * self.Hubble_now**-1)
+        SFR_now = SFR
+        SFH = [SFR]
+        for index,Hub in enumerate(self.Hubbles):
+            SFH.append(SFR_now * np.exp(-(self.ages_SFH[index+1]/t_STAR) * Hub))
+            SFR_now = SFH[index]
+            Mstar -= SFH[-1] * (self.ages_SFH[index+1] - self.ages_SFH[index])
+        return np.array(SFH), self.index_age

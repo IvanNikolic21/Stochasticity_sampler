@@ -133,7 +133,7 @@ def Zahid_metal(Mstell, z):
     Z0 = 9.1
     bZ = 9.135 + 2.64 * np.log10(1+z)
     gammaz = 0.522
-    M0 = 10**bz
+    M0 = 10**bZ
     Z = Z0 + np.log10(1-np.exp(-(Mstell/M0)**gammaz))
     
     #delta_b0 =  - gammaz / (np.exp(+(Mstell/M0)**gammaz)-1) * (Mstell / M0)**(gammaz-1) * np.log(10) * M0 * 0.003
@@ -175,5 +175,5 @@ def OH_to_mass_fraction(Z_OH):
     """
     Convert 12+log(O/H) metalicty to mass fraction one.
     """
-    return 10**(Z_OH - 9.0)
+    return 10**(Z_OH - 8.69)
     

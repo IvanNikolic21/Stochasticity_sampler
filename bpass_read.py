@@ -67,15 +67,6 @@ class bpass_loader:
         SEDp = self.SEDS[i-1]
         SEDn = self.SEDS[i]
         
-        #t_age = self.t_star * (cosmo.H(z).to(u.yr**(-1)).value)**-1
-        
-        #for index, age in enumerate(self.ag):
-        #    if age > t_age:
-        #        ages_UV = index -1
-        #        break
-        #if index==self.ages-1:
-        #    ages_UV=self.ages-1
-        
         mburst = SFR / 10**6
         if SFH_samp is None:
             SFH_short, self.index_age =  get_SFH_exp(Mstar, SFR, z)
@@ -89,8 +80,8 @@ class bpass_loader:
         UV_p = np.zeros(self.ages-1)
         UV_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
-            UV_p[i] = simps(np.array(SEDp[i][1449:1549]), wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])
-            UV_n[i] = simps(np.array(SEDp[i][1449:1549]), wv_UV) * self.SFH[i] * (self.ag[i+1]-self.ag[i])
+            UV_p[i] = np.sum(np.array(SEDp[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 1500**2 * 1e-8)
+            UV_n[i] = np.sum(np.array(SEDp[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 1500**2 * 1e-8)
         
         #if index_age!=(self.ages-1):
         #    missing_piecep = np.interp(self.ag[index_age], self.ag[1:], UV_p, right=0)
@@ -108,6 +99,42 @@ class bpass_loader:
         #b_UV = (- FUV_n * met_prev + FUV_p * met_next) / (met_next - met_prev)
         
         return UV_final
+    
+    def get_LyC(self, metal, Mstar, SFR, z, SFH_samp = None):
+        metal = OH_to_mass_fraction(metal)
+        for i, met_cur in enumerate(self.metal_avail):
+            if metal < met_cur:
+                break
+        met_prev = None
+        if i!=0:
+            met_prev = self.metal_avail[i-1]
+        met_next = self.metal_avail[i]
+
+        SEDp = self.SEDS[i-1]
+        SEDn = self.SEDS[i]
+
+        LyC_p = np.zeros(self.ages-1)
+        LyC_n = np.zeros(self.ages-1)
+        for i in range(self.ages-1):
+            LyC_p[i] = np.array(SEDp[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 911**2 * 1e-8)
+            LyC_n[i] = np.array(SEDp[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 911**2 * 1e-8)
+
+        #if index_age!=(self.ages-1):
+        #    missing_piecep = np.interp(self.ag[index_age], self.ag[1:], UV_p, right=0)
+        #    missing_piecen = np.interp(self.ag[index_age], self.ag[1:], UV_n, right=0)
+
+        #    UV_p_to_sum = np.append(UV_p[:ages_UV], missing_piecep)
+        #    UV_n_to_sum = np.append(UV_n[:ages_UV], missing_piecen)
+
+        FLyC_p = np.sum(LyC_p)
+        FLyC_n = np.sum(LyC_n)
+
+        LyC_final = np.interp(metal, [met_prev, met_next], [FLyC_p, FLyC_n])
+
+        #a_UV = (FUV_n - FUV_p) / (met_next - met_prev)
+        #b_UV = (- FUV_n * met_prev + FUV_p * met_next) / (met_next - met_prev)
+
+        return LyC_final
     
     def get_LW(self, metal, Mstar, SFR, z):
         metal=OH_to_mass_fraction(metal)
