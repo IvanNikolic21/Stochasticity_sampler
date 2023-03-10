@@ -28,6 +28,8 @@ import time
 import sys
 import numpy as np
 from multiprocessing import Pool, cpu_count, Process, Manager
+from save import HdF5Saver
+
 
 if __name__=='__main__':
     time_start_run = time.time()
@@ -75,8 +77,22 @@ if __name__=='__main__':
         emissivities_x_z = []
         emissivities_lw_z = []
         emissivities_uv_z = []
-        
+
+    current_pid = os.getpid()
+
     for index,z in enumerate(np.linspace(z_init,z_end,z_steps)):
+
+        #initialize the h5 file
+
+        container = HdF5Saver(
+            z,
+            current_pid,
+            '/home/inikolic/projects/stochasticity/samples/dir_080323/'
+        )
+        container.create_file()
+        container.create_redshift()
+        container.add_Rbias(R_bias)
+
         with Manager() as manager:
             if wavelength!='all':
                 emissivities = manager.list()
@@ -141,6 +157,7 @@ if __name__=='__main__':
                                       'sample_SFR': sample_SFR,
                                       'sample_emiss': sample_emiss,
                                       'bpass_read': bpass_read,
+                                      'main_pid': current_pid,
                                       })
                     time_end_sampling = time.time()
                     print("Finished sampling for this redshift, for", N_iter,"iterations, it took", time_end_sampling-time_start_sampling)
@@ -157,6 +174,8 @@ if __name__=='__main__':
                 emissivities_x_z.append(np.array(emissivities_x).flatten())
                 emissivities_lw_z.append(np.array(emissivities_lw).flatten())
                 emissivities_uv_z.append(np.array(emissivities_uv).flatten())
+
+        container = None
     directory = '/home/inikolic/projects/stochasticity/samples/'
     
     if wavelength!='all':
