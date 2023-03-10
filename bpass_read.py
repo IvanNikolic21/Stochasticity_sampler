@@ -10,6 +10,20 @@ from astropy import constants as const
 from scaling import OH_to_mass_fraction
 from common_stuff import get_SFH_stoch_const, get_SFH_exp, SFH_sampler
 
+def wv_to_freq(wvs):
+    """
+    Converts a wavelength to frequency.
+    Input
+    ----------
+        wvs: scalar or ndarray-like.
+            wavelengths in Angstroms.
+    Output:
+        freq: scalar of ndarray-like.
+            frequencies in Herz.
+    """
+
+    return const.c.cgs.value / (wvs * 1e-8)
+
 def reader(name):
     return open(name).read().split('\n')
 
@@ -184,6 +198,34 @@ class bpass_loader:
         #b_LW = (- FLW_n * met_prev + FLW_p * met_next) / (met_next - met_prev)
         
         return LW_final
+
+    def get_nion(self, metal, Mstar, SFR, z):
+        metal = OH_to_mass_fraction(metal)
+        for i, met_cur in enumerate(self.metal_avail):
+            if metal < met_cur:
+                break
+        met_prev = None
+        if i != 0:
+            met_prev = self.metal_avail[i - 1]
+        met_next = self.metal_avail[i]
+
+        SEDp = self.SEDS[i - 1]
+        SEDn = self.SEDS[i]
+
+
+        wv_nion = self.wv[:912]
+        nion_p = np.zeros(self.ages - 1)
+        nion_n = np.zeros(self.ages - 1)
+        for i in range(self.ages - 1):
+            nion_p[i] = np.sum(np.array(SEDp[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i])
+            nion_n[i] = np.sum(np.array(SEDn[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i])
+
+        nion_p_tot = np.sum(nion_p)
+        nion_n_tot = np.sum(nion_n)
+
+        nion_final = np.interp(metal, [met_prev, met_next], [nion_p_tot, nion_n_tot])
+
+        return nion_final
 
     def get_beta(self, metal, SFR, Mstar, z):
         metal = OH_to_mass_fraction(metal)

@@ -189,6 +189,7 @@ def Sampler_ALL(emissivities_x_list,
         SFR_samples = []
         beta_samples = []
         SFH_samples = []
+        n_ion_samples = []
 
         tot_mass[i] = np.sum(masses_saved)
         L_UV = np.zeros(shape = N_this_iter)
@@ -343,6 +344,11 @@ def Sampler_ALL(emissivities_x_list,
             finally_beta = time.time()
             print("And finally beta", finally_beta - time_to_get_LW)
 
+
+            #get number of ionizing photons (produced!)
+            n_ion_samples.append(bpass_read.get_nion(Z_sample, SFR_samp, Ms_sample, z))
+
+
             Mstar_samples.append(Ms_sample)
             SFR_samples.append(SFR_samp)
             metalicity_samples.append(Z_sample)
@@ -382,6 +388,7 @@ def Sampler_ALL(emissivities_x_list,
         container.add_SFR(np.array(SFR_samples))
         container.add_metal(np.array(metalicity_samples))
         container.add_beta(np.array(beta_samples))
+        container.add_nion(np.array(n_ion_samples))
         container.add_Lx(L_X)
         container.add_L_LW(L_LW)
         container.add_L_UV(L_UV)
