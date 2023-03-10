@@ -36,6 +36,7 @@ def Sampler_ALL(emissivities_x_list,
                 mass_binning = False,     #bin halo mass fucntion
                 f_esc_option = 'binary', #f_esc distribution option
                 bpass_read = None,
+                main_pid = os.getpid(),       #pid of the main process, only necessary for saving.
            ):
     time_enter_sampler = time.time()
     M_turn = 5*10**7  #Park+19 parametrization
@@ -47,12 +48,10 @@ def Sampler_ALL(emissivities_x_list,
     #initialize h5 file
     container = HdF5Saver(
         z,
-        os.getpid(),
+        main_pid,
         '/home/inikolic/projects/stochasticity/samples/dir_080323/'
     )
-    container.create_file()
-    container.create_redshift()
-    container.add_Rbias(R_bias)
+
     if sample_densities:
 
         delta_list = _sample_densities(z, 
@@ -141,11 +140,6 @@ def Sampler_ALL(emissivities_x_list,
             #print(N_mean_cs)
             time_is_up = time.time()
             if mass_binning:
-     #           print("starting to sample the halos for the first time", flush=True)
-                #print(Mmin_temp, log10_Mmax, mass_binning)
-                #print( len(masses), sep=", ")
-                #print( len(mass_func), sep=", ")
-                #print(mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
                 N_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
                                                  mass_func,
                                                  Mmin_temp,
@@ -411,7 +405,7 @@ def Sampler_ALL(emissivities_x_list,
     emissivities_uv_list.append(emissivities_uv)
     emissivities_lw_list.append(emissivities_lw)
 
-    container.add_X(emissivities_x)
-    container.add_LW(emissivities_lw)
-    container.add_UV(emissivities_uv)
+    #container.add_X(emissivities_x)
+    #container.add_LW(emissivities_lw)
+    #container.add_UV(emissivities_uv)
     container = None
