@@ -38,7 +38,7 @@ def Sampler_ALL(emissivities_x_list,
                 bpass_read = None,
            ):
     time_enter_sampler = time.time()
-    M_turn = 5*10**7  #Park+19 parametrization
+    M_turn = 5*10**8  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
     SFH_samp = SFH_sampler(z)
     ########################INITIALIZE SOME SCALING LAWS########################
@@ -48,7 +48,7 @@ def Sampler_ALL(emissivities_x_list,
     container = HdF5Saver(
         z,
         os.getpid(),
-        '/home/inikolic/projects/stochasticity/samples/dir_080323/'
+        '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
     )
     container.create_file()
     container.create_redshift()
@@ -153,7 +153,7 @@ def Sampler_ALL(emissivities_x_list,
                                                  V_bias,
                                                  mode = 'binning',
                                                  Poisson = sample_hmf,
-                                                 nbins = 1,
+                                                 nbins = 2,
                                                  mass_coll = None,
                                                  mass_range = None,
                                                  max_iter = None,
@@ -262,7 +262,7 @@ def Sampler_ALL(emissivities_x_list,
                                             )
                     SFR_samp = 10**(a_SFR * logm + b_SFR)
             time_for_stellar_mass = time.time()
-            print("Getting stellar mass took:", time_for_stellar_mass - time_inside_loop, flush=True)
+    #        print("Getting stellar mass took:", time_for_stellar_mass - time_inside_loop, flush=True)
             ######################LUMINOSITIES PART#############################
             #########################X_RAYS FIRST###############################
             if sample_Ms:
