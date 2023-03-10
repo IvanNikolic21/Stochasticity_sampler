@@ -29,17 +29,17 @@ def fesc_distr(option = 'binary', Mh = None):
         logM2 = 11.0
         logs1 = 0.4
         logs2 = 0.2
-      
-        a_scatter = (logs2 - logs1) / (logM2 -logM1)
-        b_scatter = (logs1 * logM2 - logs2 * logM1) / (logM2 - logM1)
+        logM = np.log10(Mh)
+        scat_value = np.interp(logM, [logM1, logM2], [logs1, logs2])
          
         if M is None:
             raise ValueError('Please enter Mh if using ksz_inference option')
-        logM = np.log10(Mh)
-        scat_value = a_scatter * logM + b_scatter
-        
+
         f_esc_mean = f_esc10 * (Mh / 10**10) ** alpha_esc
         logf_esc_mean = np.log10(f_esc_mean) - np.log(10) * scat_value**2 * 0.5
         return logf_esc_mean, scat_value
 
+    elif option == 'binary':
+        pass
+    #TBD
         
