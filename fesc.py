@@ -32,7 +32,7 @@ def fesc_distr(option = 'binary', Mh = None):
         logM = np.log10(Mh)
         scat_value = np.interp(logM, [logM1, logM2], [logs1, logs2])
          
-        if M is None:
+        if Mh is None:
             raise ValueError('Please enter Mh if using ksz_inference option')
 
         f_esc_mean = f_esc10 * (Mh / 10**10) ** alpha_esc
