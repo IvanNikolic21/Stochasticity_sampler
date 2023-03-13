@@ -515,3 +515,48 @@ class SFH_sampler:
             SFR_now = SFH[index]
             Mstar -= SFH[-1] * (self.ages_SFH[index+1] - self.ages_SFH[index])
         return np.array(SFH), self.index_age
+
+def get_Muv(L_uv):
+    """
+        Computes UV magnitudes out of UV luminosities (AB magnitudes)
+        Input
+        ----------
+        L_uv : ndarray-like,
+            scalar or array-like UV luminosity(ies).
+        Returns
+        ----------
+        M_uv : ndarray-like,
+            scalar or array-like UV magnitudes.
+    """
+
+    return np.array([-2.5 * np.log10(i * 3.846 * 1e33) + 51.6 for i in L_uv])
+
+def get_uvlf(M_uv, nbins=100, Mmin=-25, Mmax=-5, Rbias=5.0):
+    """
+        Computes the UV luminosity function based on the magnitudes provided.
+        Input
+        ----------
+        M_uv : ndarray-like,
+            scalar or array-like UV magnitudes
+        nbins : integer, optional.
+            number of bins for the lf.
+        Mmin : scalar, optional,
+            Smallest magnitude (the brightest object) for the lf histogram.
+        Mmax : scalar, optional,
+            Largest magnitude (the faintest object) for the lf histogram.
+        Rbias : scalar, optional,
+            Size of the region used to normalize the lf. Very important to
+            modify if non-standard choice for Rbias is used.
+        Returns
+        ----------
+        UV_lf : ndarray-like,
+            scalar or array-like uv-luminosity function values.
+        UV_bins : ndarray-like,
+            scalar or array-like uv-luminosity bins.
+    """
+    Vbias = 4 * np.pi / 3 * Rbias ** 3
+    UV_binning = np.linspace(Mmin, Mmax, nbins + 1)
+    UV_lf, UV_bins = np.histogram(M_uv, bins=UV_binning)
+    UV_lf = UV_lf / Vbias / (UV_bins[1] - UV_bins[
+        0])  # because uvlf is given as Mpc**-3 dex**-1
+    return UV_lf, UV_bins

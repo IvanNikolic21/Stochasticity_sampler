@@ -9,6 +9,7 @@ from scaling import sigma_Lx_const, ms_mh_21cmmc, Brorby_lx, Zahid_metal
 from chmf import chmf
 from helpers import RtoM, nonlin
 from common_stuff import _sample_halos, _sample_densities, SFH_sampler
+from common_stuff import get_Muv, get_uvlf
 from bpass_read import bpass_loader
 import numpy as np
 from fesc import fesc_distr
@@ -382,8 +383,10 @@ def Sampler_ALL(emissivities_x_list,
             L_UV[j] = F_UV
             L_LW[j] = F_LW
             L_LyC[j] = F_LyC
-        print(Mstar_samples)
-        print(SFR_samples)
+
+        M_uv = get_Muv(L_UV)
+        UV_lf, _ = get_uvlf(M_uv, Rbias=R_bias)
+
         container.add_stellar_masses(np.array(Mstar_samples))
         container.add_SFR(np.array(SFR_samples))
         container.add_metal(np.array(metalicity_samples))
@@ -393,6 +396,8 @@ def Sampler_ALL(emissivities_x_list,
         container.add_L_LW(L_LW)
         container.add_L_UV(L_UV)
         container.add_L_LyC(L_LyC)
+        container.add_uvlf(UV_lf)
+
         if len(SFH_samples)>0:
             max_len_SFH = max([len(haj) for haj in SFH_samples])
             SFH_array = np.zeros((len(SFH_samples), max_len_SFH))
@@ -401,7 +406,7 @@ def Sampler_ALL(emissivities_x_list,
         else:
             SFH_array = np.zeros((42))
         container.add_SFH(SFH_array)
-        #print("Here are the luminosities", L_X, "and here's the number of them", np.shape(L_X))
+
         emissivities_x[i] = np.sum(L_X)
         emissivities_uv[i] = np.sum(L_UV)
         emissivities_lw[i] = np.sum(L_LW)

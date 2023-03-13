@@ -163,6 +163,15 @@ class HdF5Saver:
             compression_opts = 9,
         )
 
+    def add_uvlf(self, uvlf):
+        f = h5py.File(self.filename, 'a')
+        f[str(self.redshift)][str(self.delta)].create_dataset(
+            "uvlf",
+            dtype = "float",
+            data = uvlf,
+            compression = 'gzip',
+            compression_opts = 9,
+        )
 
     def add_SFH(self, SFH):
         f = h5py.File(self.filename, 'a')
