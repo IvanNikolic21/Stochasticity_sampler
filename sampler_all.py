@@ -371,7 +371,7 @@ def Sampler_ALL(emissivities_x_list,
             elif f_esc_option == 'ksz_inference':
                 f_esc, scat = fesc_distr(f_esc_option,mass)
                 if sample_emiss:
-                    f_esc = 10**(normal(f_esc, scat))
+                    f_esc = np.clip(10**(normal(f_esc, scat)), a_min=0.0, a_max=1.0)
                     F_LyC *= f_esc
                 else:
                     F_LyC *= 10**f_esc

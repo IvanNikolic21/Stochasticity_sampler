@@ -39,7 +39,7 @@ def fesc_distr(option = 'binary', Mh = None):
         logf_esc_mean = np.log10(f_esc_mean) - np.log(10) * scat_value**2 * 0.5
         return logf_esc_mean, scat_value
 
-    elif option == 'binary':
+    elif option == 'binomial':
         pass
     #TBD
         
