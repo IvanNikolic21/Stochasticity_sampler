@@ -40,6 +40,18 @@ def fesc_distr(option = 'binary', Mh = None):
         return logf_esc_mean, scat_value
 
     elif option == 'binomial':
-        pass
+        #so far this mode is mass-independent
+        b = 0.73536
+        sigma_up = 0.05
+        sigma_down = 1.00
+
+        mean_up = 0.2 - np.log(10) * sigma_up**2 * 0.5
+        mean_down = 1e-4 - np.log(10) * sigma_down**2 * 0.5
+
+        chance = np.random.binomial(1, b)
+        if chance:
+            return mean_down, sigma_down
+        else:
+            return mean_up, sigma_up
     #TBD
         
