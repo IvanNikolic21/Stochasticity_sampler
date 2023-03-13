@@ -49,7 +49,7 @@ def Sampler_ALL(emissivities_x_list,
     container = HdF5Saver(
         z,
         main_pid,
-        '/home/inikolic/projects/stochasticity/samples/dir_080323/full'
+        '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
     )
 
     if sample_densities:

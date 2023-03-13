@@ -87,7 +87,7 @@ if __name__=='__main__':
         container = HdF5Saver(
             z,
             current_pid,
-            '/home/inikolic/projects/stochasticity/samples/dir_080323/'
+            '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
         )
         container.create_file()
         container.create_redshift()
