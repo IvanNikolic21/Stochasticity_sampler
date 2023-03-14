@@ -17,6 +17,17 @@ from numpy.random import normal
 import time
 from save import HdF5Saver
 
+
+class Sampler_Output:
+    """
+        Class that contains all of the information from the simulation. It's
+        directly passed to the saver algorithm and it's accessed directly
+        throughout the code. It's main parameter is the overdensity.
+    """
+
+    def __init__(self, delta):
+        self.delta = delta
+
 def Sampler_ALL(emissivities_x_list,
                 emissivities_lw_list,
                 emissivities_uv_list,
@@ -37,7 +48,7 @@ def Sampler_ALL(emissivities_x_list,
                 mass_binning = False,     #bin halo mass fucntion
                 f_esc_option = 'binary', #f_esc distribution option
                 bpass_read = None,
-                main_pid = os.getpid(),       #pid of the main process, only necessary for saving.
+                filename = None,
            ):
     time_enter_sampler = time.time()
     M_turn = 5*10**8  #Park+19 parametrization
@@ -46,12 +57,12 @@ def Sampler_ALL(emissivities_x_list,
     ########################INITIALIZE SOME SCALING LAWS########################
     np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))    
 
-    #initialize h5 file
-    container = HdF5Saver(
-        z,
-        main_pid,
-        '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
-    )
+    # #initialize h5 file
+    # container = HdF5Saver(
+    #     z,
+    #     main_pid,
+    #     '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
+    # )
 
     if sample_densities:
 
@@ -106,6 +117,9 @@ def Sampler_ALL(emissivities_x_list,
     emissivities_lw = np.zeros(shape = int(N_iter))
     emissivities_uv = np.zeros(shape = int(N_iter))
     tot_mass = np.zeros(shape=int(N_iter))
+
+    list_of_outputs = []
+
     #print("Starting the iteration", flush=True)
     for i in range(N_iter):
         start = time.time()
@@ -116,7 +130,11 @@ def Sampler_ALL(emissivities_x_list,
             delta_bias = np.interp(delta_bias, delta_lin_values, delta_nonlin)
             delta_bias /= hmf_this.dicke()
 
-            delta_container = container.add_delta_group(delta_bias)
+            class_int = Sampler_Output(delta_bias)
+            setattr(class_int, 'filename', filename)
+            setattr(class_int, 'redshift', z)
+
+            # delta_container = container.add_delta_group(delta_bias)
 
             masses = hmf_this.bins
             mass_func = hmf_this.ST_hmf(delta_bias)
@@ -130,16 +148,6 @@ def Sampler_ALL(emissivities_x_list,
             Mmin_temp = 7.6
             
             mass_coll = hmf_this.mass_coll_grt_ST(delta_bias, mass=Mmin_temp)
-            time_finished_hmf_initialization = time.time()
-            #print(masses, mass_func)
-            #print("Time it took from density sampling to hmf initialization: ", time_finished_hmf_initialization - time_finished_densities)
-            N_mean_cs = ig_hmf.hmf_integral_gtm(masses, 
-                                                mass_func) * V_bias
-            #np.savetxt('/home/inikolic/projects/stochasticity/samples/mass{}.txt'.format(delta_bias), np.array(mass_func))
-            #N_mean = int((N_mean_cs)[0])
-            #N_cs_norm = N_mean_cs/N_mean_cs[0]
-            #print(N_mean_cs)
-            time_is_up = time.time()
             if mass_binning:
                 N_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
                                                  mass_func,
@@ -183,8 +191,8 @@ def Sampler_ALL(emissivities_x_list,
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
                     masses_saved.append(mass)
 
-        container.add_halo_masses(np.array(masses_saved))
-
+        #container.add_halo_masses(np.array(masses_saved))
+        setattr(class_int, 'halo_masses', np.array(masses_saved))
         Mstar_samples = []
         metalicity_samples = []
         SFR_samples = []
@@ -387,16 +395,29 @@ def Sampler_ALL(emissivities_x_list,
         M_uv = get_Muv(L_UV)
         UV_lf, _ = get_uvlf(M_uv, Rbias=R_bias)
 
-        container.add_stellar_masses(np.array(Mstar_samples))
-        container.add_SFR(np.array(SFR_samples))
-        container.add_metal(np.array(metalicity_samples))
-        container.add_beta(np.array(beta_samples))
-        container.add_nion(np.array(n_ion_samples))
-        container.add_Lx(L_X)
-        container.add_L_LW(L_LW)
-        container.add_L_UV(L_UV)
-        container.add_L_LyC(L_LyC)
-        container.add_uvlf(UV_lf)
+        setattr(class_int, 'stellar_masses', np.array(Mstar_samples))
+        setattr(class_int, 'SFR', np.array(SFR_samples))
+        setattr(class_int, 'metallicity', np.array(metalicity_samples))
+        setattr(class_int, 'beta', np.array(beta_samples))
+        setattr(class_int, 'nion', np.array(n_ion_samples))
+        setattr(class_int, 'L_x', np.array(L_X))
+        setattr(class_int, 'L_lw', np.array(L_LW))
+        setattr(class_int, 'L_uv', np.array(L_UV))
+        setattr(class_int, 'L_lyc', np.array(L_LyC))
+        setattr(class_int, 'uv_lf', np.array(UV_lf))
+
+
+
+        # container.add_stellar_masses(np.array(Mstar_samples))
+        # container.add_SFR(np.array(SFR_samples))
+        # container.add_metal(np.array(metalicity_samples))
+        # container.add_beta(np.array(beta_samples))
+        # container.add_nion(np.array(n_ion_samples))
+        # container.add_Lx(L_X)
+        # container.add_L_LW(L_LW)
+        # container.add_L_UV(L_UV)
+        # container.add_L_LyC(L_LyC)
+        # container.add_uvlf(UV_lf)
 
         if len(SFH_samples)>0:
             max_len_SFH = max([len(haj) for haj in SFH_samples])
@@ -405,7 +426,12 @@ def Sampler_ALL(emissivities_x_list,
                 SFH_array[haj,:len(SFH_samples[haj])] = SFH_samples[haj]
         else:
             SFH_array = np.zeros((42))
-        container.add_SFH(SFH_array)
+
+        setattr(class_int, 'SFH', np.array(SFH_array))
+
+        list_of_outputs.append(copy(class_int))
+
+        #container.add_SFH(SFH_array)
 
         emissivities_x[i] = np.sum(L_X)
         emissivities_uv[i] = np.sum(L_UV)
@@ -421,3 +447,5 @@ def Sampler_ALL(emissivities_x_list,
     #container.add_LW(emissivities_lw)
     #container.add_UV(emissivities_uv)
     container = None
+
+    return list_of_outputs

@@ -27,8 +27,9 @@ import os
 import time
 import sys
 import numpy as np
+import h5py
 from multiprocessing import Pool, cpu_count, Process, Manager
-from save import HdF5Saver
+from save import saving_function
 
 
 if __name__=='__main__':
@@ -80,18 +81,25 @@ if __name__=='__main__':
 
     current_pid = os.getpid()
 
-    for index,z in enumerate(np.linspace(z_init,z_end,z_steps)):
+    f = h5py.File('/home/inikolic/projects/stochasticity/samples/dir_080323/full/full.hdf5','a')
+    f.close()
+    filename = '/home/inikolic/projects/stochasticity/samples/dir_080323/full/full.hdf5'
 
+    for index,z in enumerate(np.linspace(z_init,z_end,z_steps)):
+        f = h5py.File(filename, 'a')
+        f.create_group(str(z))
+        f.attrs["Rbias"] = Rbias
+        f.close()
         #initialize the h5 file
 
-        container = HdF5Saver(
-            z,
-            current_pid,
-            '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
-        )
-        container.create_file()
-        container.create_redshift()
-        container.add_Rbias(R_bias)
+        # container = HdF5Saver(
+        #     z,
+        #     current_pid,
+        #     '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
+        # )
+        #container.create_file()
+        #container.create_redshift()
+        #container.add_Rbias(R_bias)
 
         with Manager() as manager:
             if wavelength!='all':
@@ -101,6 +109,7 @@ if __name__=='__main__':
                 emissivities_lw = manager.list()
                 emissivities_uv = manager.list()
             processes=[]
+            pool = Pool(n_processes)
             for i in range(n_processes):
                 if wavelength == 'X':
                     p = Process(target=Sampler_x, 
@@ -143,37 +152,61 @@ if __name__=='__main__':
                 elif wavelength == 'all':
                     time_start_sampling = time.time()
                     print("Currently in the function run.py, starting to sample soon:", time_start_sampling - time_start_run)
-                    p = Process(target = Sampler_ALL,
-                               kwargs={'emissivities_x_list': emissivities_x,
-                                      'emissivities_lw_list': emissivities_lw,
-                                      'emissivities_uv_list': emissivities_uv,
-                                      'z': z,
-                                      'dlog10m': dlog10m,
-                                      'N_iter': N_iter,
-                                      'R_bias': R_bias,
-                                      'log10_Mmin': 5.0,
-                                      'mass_binning': 1,
-                                      'sample_hmf': sample_Poiss,
-                                      'sample_SFR': sample_SFR,
-                                      'sample_emiss': sample_emiss,
-                                      'bpass_read': bpass_read,
-                                      'main_pid': current_pid,
-                                      })
+                    # p = Process(target = Sampler_ALL,
+                    #            kwargs={'emissivities_x_list': emissivities_x,
+                    #                   'emissivities_lw_list': emissivities_lw,
+                    #                   'emissivities_uv_list': emissivities_uv,
+                    #                   'z': z,
+                    #                   'dlog10m': dlog10m,
+                    #                   'N_iter': N_iter,
+                    #                   'R_bias': R_bias,
+                    #                   'log10_Mmin': 5.0,
+                    #                   'mass_binning': 1,
+                    #                   'sample_hmf': sample_Poiss,
+                    #                   'sample_SFR': sample_SFR,
+                    #                   'sample_emiss': sample_emiss,
+                    #                   'bpass_read': bpass_read,
+                    #                   'main_pid': current_pid,
+                    #                   })
+
+                    pool.apply_async(Sampler_ALL,
+                                     kwds = {
+                                         'emissivities_x_list': emissivities_x,
+                                         'emissivities_lw_list': emissivities_lw,
+                                         'emissivities_uv_list': emissivities_uv,
+                                         'z': z,
+                                         'dlog10m': dlog10m,
+                                         'N_iter': N_iter,
+                                         'R_bias': R_bias,
+                                         'log10_Mmin': 5.0,
+                                         'mass_binning': 1,
+                                         'sample_hmf': sample_Poiss,
+                                         'sample_SFR': sample_SFR,
+                                         'sample_emiss': sample_emiss,
+                                         'bpass_read': bpass_read,
+                                         'filename': current_pid,
+                                     },
+                                     callback=saving_function)
+
                     time_end_sampling = time.time()
                     print("Finished sampling for this redshift, for", N_iter,"iterations, it took", time_end_sampling-time_start_sampling)
                 else: 
                     raise ValueError('Wrong wavelenght string!')
-                processes.append(p)
-                p.start()
+                #processes.append(p)
+                #p.start()
              #   print(p.pid)
-            for p in processes:
-                p.join()
+
+           # for p in processes:
+           #     p.join()
+            pool.close()
+            pool.join()
             if wavelength != 'all':
                 emissivities_redshift.append(np.array(emissivities).flatten())
             else:
                 emissivities_x_z.append(np.array(emissivities_x).flatten())
                 emissivities_lw_z.append(np.array(emissivities_lw).flatten())
                 emissivities_uv_z.append(np.array(emissivities_uv).flatten())
+
 
         container = None
     directory = '/home/inikolic/projects/stochasticity/samples/'
