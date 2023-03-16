@@ -25,15 +25,30 @@ def wv_to_freq(wvs):
     return const.c.cgs.value / (wvs * 1e-8)
 
 def reader(name):
+    """
+    Function that reads and splits a string into separate strings.
+    """
     return open(name).read().split('\n')
 
 def splitter(fp):
+    """Function that splits SEDs. Useful for parallelizing."""
     wv_b = int(1e5)
     return [[float(fp[i].split()[j]) for i in range(wv_b)] for j in range(1,52)]
 
 class bpass_loader:
-    
+    """
+    This Class contains all of the properties calculated using BPASS. Class
+    structure is used to improve the speed.
+    """
     def __init__(self, parallel = None, filename = '/home/inikolic/projects/stochasticity/stoc_sampler/BPASS/spectra-bin-imf135_300.a+00.'):
+        """
+        Input
+        ----------
+        parallel : boolean,
+            Whether first processing is parallelized.
+        filename : string,
+            Which BPASS file is used.
+        """
         self.metal_avail = np.array([1e-5, 1e-4, 1e-3, 0.002, 0.003, 0.004, 
                                      0.006, 0.008, 0.01, 0.14, 0.02, 0.03, 
                                      0.04])
@@ -67,9 +82,35 @@ class bpass_loader:
         self.ag = np.array([0] + [10**(6.05 + 0.1 * i) for i in range(1,52)])
         
         self.t_star = 0.36
-        
+
     def get_UV(self, metal, Mstar, SFR, z, SFH_samp = None):
+        """
+        Function returs the specific luminosity at 1500 angstroms averaged over
+        100 angstroms.
+        Input
+        ----------
+            metal : float,
+                Metallicity of the galaxy.
+            Mstar : float,
+                Stellar mass of the galaxy.
+            SFR : float,
+                Star formation rate of the galaxy.
+            z : float,
+                redshift of observation.
+            SFH_samp : boolean,
+                whether SFH is sampled or it's given by previous properties.
+                So far sampling does nothing so it's all the same.
+        Output
+        ----------
+            UV_final : float,
+                UV luminosity in ergs Hz^-1
+        """
         metal = OH_to_mass_fraction(metal)
+
+        #to get solar metalicity need to take 0.42 according to Strom+18
+
+        metal = metal / 10**0.42
+
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
                 break
@@ -115,7 +156,31 @@ class bpass_loader:
         return UV_final
     
     def get_LyC(self, metal, Mstar, SFR, z, SFH_samp = None):
+        """
+                Function returs the specific luminosity at 912 angstroms.
+                Input
+                ----------
+                    metal : float,
+                        Metallicity of the galaxy.
+                    Mstar : float,
+                        Stellar mass of the galaxy.
+                    SFR : float,
+                        Star formation rate of the galaxy.
+                    z : float,
+                        redshift of observation.
+                    SFH_samp : boolean,
+                        whether SFH is sampled or it's given by previous properties.
+                        So far sampling does nothing so it's all the same.
+                Output
+                ----------
+                    LyC_final : float,
+                        Lyc luminosity in ergs Hz^-1
+                """
+
         metal = OH_to_mass_fraction(metal)
+
+        metal = metal / 10 ** 0.42 #see above
+
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
                 break
@@ -131,7 +196,7 @@ class bpass_loader:
         LyC_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
             LyC_p[i] = np.array(SEDp[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 911**2 * 1e-8)
-            LyC_n[i] = np.array(SEDp[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 911**2 * 1e-8)
+            LyC_n[i] = np.array(SEDn[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 911**2 * 1e-8)
 
         #if index_age!=(self.ages-1):
         #    missing_piecep = np.interp(self.ag[index_age], self.ag[1:], UV_p, right=0)
@@ -151,7 +216,33 @@ class bpass_loader:
         return LyC_final
     
     def get_LW(self, metal, Mstar, SFR, z):
+        """
+                Function returs the luminsoity from 912 to 1108 angstroms
+                represnting the Lyman-Werner luminosity.
+                Input
+                ----------
+                    metal : float,
+                        Metallicity of the galaxy.
+                    Mstar : float,
+                        Stellar mass of the galaxy.
+                    SFR : float,
+                        Star formation rate of the galaxy.
+                    z : float,
+                        redshift of observation.
+                    SFH_samp : boolean,
+                        whether SFH is sampled or it's given by previous properties.
+                        So far sampling does nothing so it's all the same.
+                Output
+                ----------
+                    LW_final : float,
+                        LW luminosity in ergs.
+                """
+
         metal=OH_to_mass_fraction(metal)
+
+        metal = metal / 10 ** 0.42 #see above
+
+
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
                 break
@@ -181,26 +272,36 @@ class bpass_loader:
         for i in range(self.ages-1):
             LW_p[i] = simps(np.array(SEDp[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
             LW_n[i] = simps(np.array(SEDn[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
-        
-        #if ages_LW!=(self.ages):
-        #    missing_piecep = np.interp(t_age, self.ag[1:], LW_p, right=0)
-        #    missing_piecen = np.interp(t_age, self.ag[1:], LW_n, right=0)
 
-         #   LW_p_to_sum = np.append(LW_p[:ages_LW], missing_piecep)
-         #   LW_n_to_sum = np.append(LW_n[:ages_LW], missing_piecen)
-        
         FLW_p = np.sum(LW_p)
         FLW_n = np.sum(LW_n)
 
         LW_final = np.interp(metal, [met_prev, met_next], [FLW_p, FLW_n])
         
-        #a_LW = (FLW_n - FLW_p) / (met_next - met_prev)
-        #b_LW = (- FLW_n * met_prev + FLW_p * met_next) / (met_next - met_prev)
-        
         return LW_final
 
     def get_nion(self, metal, Mstar, SFR, z):
+        """
+                Function returs the number of ionizing photons
+                Input
+                ----------
+                    metal : float,
+                        Metallicity of the galaxy.
+                    Mstar : float,
+                        Stellar mass of the galaxy.
+                    SFR : float,
+                        Star formation rate of the galaxy.
+                    z : float,
+                        redshift of observation.
+                Output
+                ----------
+                    nion_final : float,
+                        Number of ionizing photons produced per second.
+                """
         metal = OH_to_mass_fraction(metal)
+
+        metal = metal / 10 ** 0.42 #see above
+
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
                 break
@@ -228,7 +329,27 @@ class bpass_loader:
         return nion_final
 
     def get_beta(self, metal, SFR, Mstar, z):
+        """
+                Function returs the UV slope for the galaxy.
+                Input
+                ----------
+                    metal : float,
+                        Metallicity of the galaxy.
+                    Mstar : float,
+                        Stellar mass of the galaxy.
+                    SFR : float,
+                        Star formation rate of the galaxy.
+                    z : float,
+                        redshift of observation.
+                Output
+                ----------
+                    beta_slope : float,
+                        beta slope for the galay.
+                """
         metal = OH_to_mass_fraction(metal)
+
+        metal = metal / 10 ** 0.42 #see above
+
         for i, met_cur in enumerate(self.metal_avail):
             if metal < met_cur:
                 break
@@ -283,7 +404,7 @@ class bpass_loader:
 
 def loader(metal, band,SFR,z, filename = '/home/inikolic/projects/stochasticity/stoc_sampler/BPASS/spectra-bin-imf135_300.a+00.'):
     """
-        Function to load and manipulate with the bpass data
+        Old function to load and manipulate with the bpass data. Not used anymore.
         Parameters
         ----------
         filename: string
