@@ -121,22 +121,25 @@ class bpass_loader:
         
         SEDp = self.SEDS[i-1]
         SEDn = self.SEDS[i]
-        
-        mburst = SFR / 10**6
-        if SFH_samp is None:
-            SFH_short, self.index_age =  get_SFH_exp(Mstar, SFR, z)
-        else:
-            SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
-        self.SFH = np.zeros(self.ages-1)
-        self.SFH[:len(SFH_short)] = np.array(SFH_short)
-        self.SFH /= 10**6
+
+        try:
+            self.SFH
+        except NameError:
+
+            if SFH_samp is None:
+                SFH_short, self.index_age =  get_SFH_exp(Mstar, SFR, z)
+            else:
+                SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
+            self.SFH = np.zeros(self.ages-1)
+            self.SFH[:len(SFH_short)] = np.array(SFH_short)
+            self.SFH /= 10**6
         
         wv_UV = self.wv[1450:1550]
         UV_p = np.zeros(self.ages-1)
         UV_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
             UV_p[i] = np.sum(np.array(SEDp[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 1500**2 * 1e-8)
-            UV_n[i] = np.sum(np.array(SEDp[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 1500**2 * 1e-8)
+            UV_n[i] = np.sum(np.array(SEDn[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * (1/const.c.cgs.value * 1500**2 * 1e-8)
         
         #if index_age!=(self.ages-1):
         #    missing_piecep = np.interp(self.ag[index_age], self.ag[1:], UV_p, right=0)
@@ -192,6 +195,18 @@ class bpass_loader:
         SEDp = self.SEDS[i-1]
         SEDn = self.SEDS[i]
 
+        try:
+            self.SFH
+        except NameError:
+
+            if SFH_samp is None:
+                SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)
+            else:
+                SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
+            self.SFH = np.zeros(self.ages - 1)
+            self.SFH[:len(SFH_short)] = np.array(SFH_short)
+            self.SFH /= 10 ** 6
+
         LyC_p = np.zeros(self.ages-1)
         LyC_n = np.zeros(self.ages-1)
         for i in range(self.ages-1):
@@ -215,7 +230,7 @@ class bpass_loader:
 
         return LyC_final
     
-    def get_LW(self, metal, Mstar, SFR, z):
+    def get_LW(self, metal, Mstar, SFR, z, SFH_samp=None):
         """
                 Function returs the luminsoity from 912 to 1108 angstroms
                 represnting the Lyman-Werner luminosity.
@@ -253,19 +268,19 @@ class bpass_loader:
         
         SEDp = self.SEDS[i-1]
         SEDn = self.SEDS[i]
-        
-       # t_age = self.t_star * (cosmo.H(z).to(u.yr**(-1)).value)**-1
-        
-       # for index, age in enumerate(self.ag):
-       #     if age > t_age:
-       #         ages_LW = index -1
-       #         break
-       # if index==self.ages-1:
-       #     ages_LW=self.ages-1
-        
-        mburst = SFR / 10**6
 
-        
+        try:
+            self.SFH
+        except NameError:
+
+            if SFH_samp is None:
+                SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)
+            else:
+                SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
+            self.SFH = np.zeros(self.ages - 1)
+            self.SFH[:len(SFH_short)] = np.array(SFH_short)
+            self.SFH /= 10 ** 6
+
         wv_LW = self.wv[911:1107]
         LW_p = np.zeros(self.ages-1)
         LW_n = np.zeros(self.ages-1)
@@ -280,7 +295,7 @@ class bpass_loader:
         
         return LW_final
 
-    def get_nion(self, metal, Mstar, SFR, z):
+    def get_nion(self, metal, Mstar, SFR, z, SFH_samp = None):
         """
                 Function returs the number of ionizing photons
                 Input
@@ -313,6 +328,17 @@ class bpass_loader:
         SEDp = self.SEDS[i - 1]
         SEDn = self.SEDS[i]
 
+        try:
+            self.SFH
+        except NameError:
+
+            if SFH_samp is None:
+                SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)
+            else:
+                SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
+            self.SFH = np.zeros(self.ages - 1)
+            self.SFH[:len(SFH_short)] = np.array(SFH_short)
+            self.SFH /= 10 ** 6
 
         wv_nion = self.wv[:912]
         nion_p = np.zeros(self.ages - 1)
@@ -328,7 +354,7 @@ class bpass_loader:
 
         return nion_final
 
-    def get_beta(self, metal, SFR, Mstar, z):
+    def get_beta(self, metal, SFR, Mstar, z, SFH_samp=None):
         """
                 Function returs the UV slope for the galaxy.
                 Input
@@ -361,16 +387,17 @@ class bpass_loader:
         SEDp = self.SEDS[i - 1]
         SEDn = self.SEDS[i]
 
-        #t_age = self.t_star * (cosmo.H(z).to(u.yr ** (-1)).value) ** -1
+        try:
+            self.SFH
+        except NameError:
 
-        #for index, age in enumerate(self.ag):
-        #    if age > t_age:
-        #        ages_bet = index - 1
-        #        break
-        #if index == self.ages - 1:
-        #    ages_bet = self.ages - 1
-
-        mburst = SFR / 10 ** 6
+            if SFH_samp is None:
+                SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)
+            else:
+                SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
+            self.SFH = np.zeros(self.ages - 1)
+            self.SFH[:len(SFH_short)] = np.array(SFH_short)
+            self.SFH /= 10 ** 6
 
         wv_bet = self.wv[1216:3200]        #beta is usually derived redwards of Ly-a
         bet_p = np.zeros((self.ages - 1, len(wv_bet)))
