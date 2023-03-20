@@ -80,14 +80,30 @@ if __name__=='__main__':
         emissivities_uv_z = []
 
     current_pid = os.getpid()
+    directory = '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
 
-    f = h5py.File('/home/inikolic/projects/stochasticity/samples/dir_080323/full/full.hdf5','a')
+
+    filename = directory + 'full' + str(
+            z_init) + '_' + str(z_end) + '_R' + str(R_bias)
+
+        if sample_SFR:
+            filename = filename + '_sfrTRUE'
+        else:
+            filename = filename + '_sfrFALSE'
+
+        if sample_emiss:
+            filename = filename + '_emissTRUE_'
+        else:
+            filename = filename + '_emissFALSE_'
+
+        filename = filename + str(sample_Poiss).upper() + '.h5'
+
+    f = h5py.File(filename,'a')
     f.attrs["Rbias"] = R_bias
     f.attrs["sample_SFR"] = sample_SFR
     f.attrs["sample_emiss"] = sample_emiss
     f.attrs["sample_Poiss"] = sample_Poiss
     f.close()
-    filename = '/home/inikolic/projects/stochasticity/samples/dir_080323/full/full.hdf5'
 
     for index,z in enumerate(np.linspace(z_init,z_end,z_steps)):
         f = h5py.File(filename, 'a')
