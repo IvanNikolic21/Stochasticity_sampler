@@ -86,17 +86,17 @@ if __name__=='__main__':
     filename = directory + 'full' + str(
             z_init) + '_' + str(z_end) + '_R' + str(R_bias)
 
-        if sample_SFR:
-            filename = filename + '_sfrTRUE'
-        else:
-            filename = filename + '_sfrFALSE'
+    if sample_SFR:
+        filename = filename + '_sfrTRUE'
+    else:
+        filename = filename + '_sfrFALSE'
 
-        if sample_emiss:
-            filename = filename + '_emissTRUE_'
-        else:
-            filename = filename + '_emissFALSE_'
+    if sample_emiss:
+        filename = filename + '_emissTRUE_'
+    else:
+        filename = filename + '_emissFALSE_'
 
-        filename = filename + str(sample_Poiss).upper() + '.h5'
+    filename = filename + str(sample_Poiss).upper() + '.h5'
 
     f = h5py.File(filename,'a')
     f.attrs["Rbias"] = R_bias
