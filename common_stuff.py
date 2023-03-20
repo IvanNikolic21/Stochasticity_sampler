@@ -48,7 +48,7 @@ def hmf_integral_gtm(M, dndm, mass_density=False):
     m = M[np.logical_not(np.isnan(dndm))]
     dndm = dndm[np.logical_not(np.isnan(dndm))]
     dndlnm = m * dndm
-    print(m, dndm, dndlnm)
+    #print(m, dndm, dndlnm)
     if len(m) < 4:
         raise NaNException(
             "There are too few real numbers in dndm: len(dndm) = %s, #NaN's = %s"
@@ -320,7 +320,7 @@ def _sample_halos(
     """
 
     m_haloes = []
-    print(mode)
+    #print(mode)
     if mode == 'binning':
         if nbins == 1 :
             inds = [b for b, m in enumerate(mx) if m>10**Mmin and m<10**Mmax]
@@ -363,7 +363,7 @@ def _sample_halos(
                     N_actual[k] = np.random.poisson(N_mean_list[k])
                 else:
                     N_actual[k] = round(N_mean_list[k])
-                print(N_actual)
+                #print(N_actual)
                 rn_now = np.random.uniform(size = int(N_actual[k]))
                 for index, rn in enumerate(rn_now):
                     m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))

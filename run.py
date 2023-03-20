@@ -29,7 +29,7 @@ import sys
 import numpy as np
 import h5py
 from multiprocessing import Pool, cpu_count, Process, Manager
-from save import saving_function
+from save import saving_function, error_function
 
 
 if __name__=='__main__':
@@ -205,7 +205,8 @@ if __name__=='__main__':
                                          'bpass_read': bpass_read,
                                          'filename': current_pid,
                                      },
-                                     callback=saving_function)
+                                     callback=saving_function,
+                                     error_callback = error_function)
 
                     time_end_sampling = time.time()
                     print("Finished sampling for this redshift, for", N_iter,"iterations, it took", time_end_sampling-time_start_sampling)

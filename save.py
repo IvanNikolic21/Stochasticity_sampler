@@ -183,7 +183,12 @@ class HdF5Saver:
             compression_opts = 9,
         )
 
+def error_function(what):
+    print("Something happened!")
+    raise ValueError("Check your function")
+
 def saving_function(class_list):
+    print("accessed saving function")
     hdf = h5py.File(class_list[0].filename)
     for file in class_list:
         delta = file.delta

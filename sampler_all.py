@@ -317,7 +317,7 @@ def Sampler_ALL(emissivities_x_list,
                     a_Lx, b_Lx = Brorby_lx(Z_mean)
                     Lx_sample = 10**(a_Lx * logsfr + b_Lx)
             time_to_get_X = time.time()
-            print("Time it took to get X-rays", time_to_get_X - time_for_stellar_mass, flush=True)
+            #print("Time it took to get X-rays", time_to_get_X - time_for_stellar_mass, flush=True)
             #######################END OF LX PART###############################
             ######################START OF UV PART##############################
             #assert a_Lx=='something stupid', "Something stupid happened"
@@ -347,11 +347,11 @@ def Sampler_ALL(emissivities_x_list,
 
 
             time_to_get_LW = time.time()
-            print("Other emissivities took", time_to_get_LW - time_to_get_X)
+            #print("Other emissivities took", time_to_get_LW - time_to_get_X)
             ###########GET_BETAS#######
             beta_samples.append(bpass_read.get_beta(Z_sample, SFR_samp, Ms_sample, z))
             finally_beta = time.time()
-            print("And finally beta", finally_beta - time_to_get_LW)
+            #print("And finally beta", finally_beta - time_to_get_LW)
 
 
             #get number of ionizing photons (produced!)
@@ -447,5 +447,5 @@ def Sampler_ALL(emissivities_x_list,
     #container.add_LW(emissivities_lw)
     #container.add_UV(emissivities_uv)
     container = None
-
+    print(list_of_outputs)
     return list_of_outputs
