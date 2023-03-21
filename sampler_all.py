@@ -201,10 +201,10 @@ def Sampler_ALL(emissivities_x_list,
         n_ion_samples = []
 
         tot_mass[i] = np.sum(masses_saved)
-        L_UV = np.zeros(shape = N_this_iter)
-        L_X = np.zeros(shape = N_this_iter)
-        L_LW  = np.zeros(shape = N_this_iter)
-        L_LyC = np.zeros(shape=N_this_iter)
+        L_UV = np.zeros(shape = len(masses_saved))
+        L_X = np.zeros(shape = len(masses_saved))
+        L_LW  = np.zeros(shape = len(masses_saved))
+        L_LyC = np.zeros(shape=len(masses_saved))
         time_to_start_getting_quantities = time.time()
         #print("Starting the for loop:", time_to_start_getting_quantities - time_for_halo_sampling)        
         for j,mass in enumerate(masses_saved):
