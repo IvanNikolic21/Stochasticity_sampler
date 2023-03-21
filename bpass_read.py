@@ -344,8 +344,8 @@ class bpass_loader:
         nion_p = np.zeros(self.ages - 1)
         nion_n = np.zeros(self.ages - 1)
         for i in range(self.ages - 1):
-            nion_p[i] = np.sum(np.array(SEDp[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i])
-            nion_n[i] = np.sum(np.array(SEDn[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i])
+            nion_p[i] = np.sum(np.array(SEDp[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i]) * 3.826 * 1e33
+            nion_n[i] = np.sum(np.array(SEDn[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i]) * 3.826 * 1e33
 
         nion_p_tot = np.sum(nion_p)
         nion_n_tot = np.sum(nion_n)
