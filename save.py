@@ -189,7 +189,7 @@ def error_function(what):
 
 def saving_function(class_list):
     print("accessed saving function")
-    hdf = h5py.File(class_list[0].filename)
+    hdf = h5py.File(class_list[0].filename, 'a')
     for file in class_list:
         delta = file.delta
         redshift = file.redshift
