@@ -429,7 +429,7 @@ def Sampler_ALL(emissivities_x_list,
 
         setattr(class_int, 'SFH', np.array(SFH_array))
 
-        list_of_outputs.append(copy(class_int))
+        list_of_outputs.append(class_int)
 
         #container.add_SFH(SFH_array)
 

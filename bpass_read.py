@@ -124,7 +124,7 @@ class bpass_loader:
 
         try:
             self.SFH
-        except NameError:
+        except AttributeError:
 
             if SFH_samp is None:
                 SFH_short, self.index_age =  get_SFH_exp(Mstar, SFR, z)
@@ -197,7 +197,7 @@ class bpass_loader:
 
         try:
             self.SFH
-        except NameError:
+        except AttributeError:
 
             if SFH_samp is None:
                 SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)
@@ -271,7 +271,7 @@ class bpass_loader:
 
         try:
             self.SFH
-        except NameError:
+        except AttributeError:
 
             if SFH_samp is None:
                 SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)
@@ -330,7 +330,7 @@ class bpass_loader:
 
         try:
             self.SFH
-        except NameError:
+        except AttributeError:
 
             if SFH_samp is None:
                 SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)
@@ -389,7 +389,7 @@ class bpass_loader:
 
         try:
             self.SFH
-        except NameError:
+        except AttributeError:
 
             if SFH_samp is None:
                 SFH_short, self.index_age = get_SFH_exp(Mstar, SFR, z)

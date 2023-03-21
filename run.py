@@ -119,7 +119,6 @@ if __name__=='__main__':
         #container.create_file()
         #container.create_redshift()
         #container.add_Rbias(R_bias)
-
         with Manager() as manager:
             if wavelength!='all':
                 emissivities = manager.list()
@@ -203,7 +202,7 @@ if __name__=='__main__':
                                          'sample_SFR': sample_SFR,
                                          'sample_emiss': sample_emiss,
                                          'bpass_read': bpass_read,
-                                         'filename': current_pid,
+                                         'filename': filename,
                                      },
                                      callback=saving_function,
                                      error_callback = error_function)
