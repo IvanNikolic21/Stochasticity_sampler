@@ -51,7 +51,7 @@ def Sampler_ALL(emissivities_x_list,
                 filename = None,
            ):
     time_enter_sampler = time.time()
-    M_turn = 5*10**8  #Park+19 parametrization
+    M_turn = 5*10**7  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
     SFH_samp = SFH_sampler(z)
     ########################INITIALIZE SOME SCALING LAWS########################
@@ -292,7 +292,7 @@ def Sampler_ALL(emissivities_x_list,
                     sigma_Z = sigma_metalicity_const()
                     Z_mean -= np.log(10) * sigma_Z**2 / 2
 
-                    Z_sample = 10**(normal((np.log10(Z_mean)), sigma_Z))
+                    Z_sample = normal(Z_mean, sigma_Z)
 
                     a_Lx, b_Lx = Brorby_lx(Z_sample)
                     Lx_sample = 10**(a_Lx*logsfr+b_Lx)

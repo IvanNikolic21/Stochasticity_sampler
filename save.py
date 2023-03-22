@@ -207,7 +207,7 @@ def saving_function(class_list):
         hdf[str(redshift)][str(delta)].create_dataset(
             "uv_lf",
             dtype="float",
-            data=file.uvlf,
+            data=file.uv_lf,
             compression='gzip',
             compression_opts=9,
         )
