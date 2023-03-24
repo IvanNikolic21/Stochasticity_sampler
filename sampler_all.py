@@ -197,10 +197,12 @@ def Sampler_ALL(emissivities_x_list,
                 mhs[ind] = np.interp(rand, np.flip(N_cs_norm), np.flip(masses))
         
         masses_saved = []
-        if duty_cycle:
+        if duty_cycle and not control_run:
             for index, mass in enumerate(mhs):
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
                     masses_saved.append(mass)
+        elif control_run:
+            masses_saved = mhs #duty cycle already applied
 
         #container.add_halo_masses(np.array(masses_saved))
         setattr(class_int, 'halo_masses', np.array(masses_saved))
