@@ -569,4 +569,4 @@ def _get_loaded_halos(z, direc = '/home/inikolic/projects/stochasticity/_cache')
     f = h5py.File(direc + '/saved_halos.h5', 'r')
     M = np.array(f[str(z)]['Mh'])
     f.close()
-    return M
+    return len(M),M
