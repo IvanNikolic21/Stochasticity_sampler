@@ -9,7 +9,7 @@ from scaling import sigma_Lx_const, ms_mh_21cmmc, Brorby_lx, Zahid_metal
 from chmf import chmf
 from helpers import RtoM, nonlin
 from common_stuff import _sample_halos, _sample_densities, SFH_sampler
-from common_stuff import get_Muv, get_uvlf
+from common_stuff import get_Muv, get_uvlf, _get_loaded_halos
 from bpass_read import bpass_loader
 import numpy as np
 from fesc import fesc_distr
@@ -49,9 +49,10 @@ def Sampler_ALL(emissivities_x_list,
                 f_esc_option = 'binary', #f_esc distribution option
                 bpass_read = None,
                 filename = None,
+                control_run = False,
            ):
-    time_enter_sampler = time.time()
-    M_turn = 5*10**7  #Park+19 parametrization
+
+    M_turn = 5*10**8  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
     SFH_samp = SFH_sampler(z)
     ########################INITIALIZE SOME SCALING LAWS########################
@@ -64,7 +65,7 @@ def Sampler_ALL(emissivities_x_list,
     #     '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
     # )
 
-    if sample_densities:
+    if sample_densities and not control_run:
 
         delta_list = _sample_densities(z, 
                                        N_iter, 
@@ -81,7 +82,7 @@ def Sampler_ALL(emissivities_x_list,
         delta_lin_values= nonlin(delta_nonlin)
         time_finished_densities = time.time()
         #print("h5 initialization, and density sampling took", time_finished_densities-time_enter_sampler)        
-    else:
+    elif not sample_densities and not control_run:
 
         if delta_bias==0.0:
             hmf_this = hmf.MassFunction(z = z, 
@@ -123,7 +124,7 @@ def Sampler_ALL(emissivities_x_list,
     #print("Starting the iteration", flush=True)
     for i in range(N_iter):
         start = time.time()
-        if sample_densities:
+        if sample_densities and not control_run:
 
             delta_bias = delta_list[i]
             delta_bias_before = float(delta_bias)
@@ -174,6 +175,16 @@ def Sampler_ALL(emissivities_x_list,
                     print(np.sum(mhs),mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
                     #raise ValueError("For this iteration sampling halos failed")
                 #assert len(mhs) < 1, "only one mass, aborting"
+        elif control_run:
+
+            class_int = Sampler_Output(delta_bias)
+            setattr(class_int, 'filename', filename)
+            setattr(class_int, 'redshift', z)
+            N_this_iter, mhs = _get_loaded_halos(
+                z,
+                direc = '/home/inikolic/projects/stochasticity/_cache'
+            )
+
         time_is_now = time.time()
         #print("Time for mass sampling", time_is_now - time_is_up)
         N_this_iter = int(N_this_iter)

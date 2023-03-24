@@ -9,6 +9,7 @@ from scipy import integrate
 from numpy.random import normal
 from astropy.cosmology import z_at_value
 from astropy import units
+import h5py
 
 from scipy.interpolate import InterpolatedUnivariateSpline as _spline
 import scipy.integrate as intg
@@ -560,3 +561,12 @@ def get_uvlf(M_uv, nbins=100, Mmin=-25, Mmax=-5, Rbias=5.0):
     UV_lf = UV_lf / Vbias / (UV_bins[1] - UV_bins[
         0])  # because uvlf is given as Mpc**-3 dex**-1
     return UV_lf, UV_bins
+
+def _get_loaded_halos(z, direc = '/home/inikolic/projects/stochasticity/_cache'):
+    """
+        Get loaded halos from the cache. Useful for debugging and controlling.
+    """
+    f = h5py.File(direc + '/saved_halos.h5', 'r')
+    M = np.array(f[str(z)]['Mh'])
+    f.close()
+    return M
