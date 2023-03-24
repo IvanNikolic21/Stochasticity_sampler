@@ -30,7 +30,7 @@ import numpy as np
 import h5py
 from multiprocessing import Pool, cpu_count, Process, Manager
 from save import saving_function, error_function
-
+import datetime
 
 if __name__=='__main__':
     time_start_run = time.time()
@@ -96,7 +96,8 @@ if __name__=='__main__':
     else:
         filename = filename + '_emissFALSE_'
 
-    filename = filename + str(sample_Poiss).upper() + '.h5'
+    filename = filename + str(sample_Poiss).upper()
+    filename = filename +  '_' + str(datetime.datetime.now().date()) + '.h5'
 
     f = h5py.File(filename,'a')
     f.attrs["Rbias"] = R_bias
