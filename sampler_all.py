@@ -51,7 +51,7 @@ def Sampler_ALL(emissivities_x_list,
                 filename = None,
                 control_run = False,
            ):
-
+    print("Started sampling!")
     M_turn = 5*10**8  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
     SFH_samp = SFH_sampler(z)
@@ -176,8 +176,8 @@ def Sampler_ALL(emissivities_x_list,
                     #raise ValueError("For this iteration sampling halos failed")
                 #assert len(mhs) < 1, "only one mass, aborting"
         elif control_run:
-
-            class_int = Sampler_Output(delta_bias)
+            fake_delta = float(str(i) + str(os.getpid()))
+            class_int = Sampler_Output(fake_delta)
             setattr(class_int, 'filename', filename)
             setattr(class_int, 'redshift', z)
             N_this_iter, mhs = _get_loaded_halos(
@@ -460,5 +460,5 @@ def Sampler_ALL(emissivities_x_list,
     #container.add_LW(emissivities_lw)
     #container.add_UV(emissivities_uv)
     container = None
-    print(list_of_outputs)
+    #print(list_of_outputs)
     return list_of_outputs

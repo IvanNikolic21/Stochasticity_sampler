@@ -123,8 +123,16 @@ class bpass_loader:
         SEDn = self.SEDS[i]
 
         try:
-            self.SFH
-        except AttributeError:
+            if not self.SFH[0] == SFR / 10**6:
+                if SFH_samp is None:
+                    SFH_short, self.index_age =  get_SFH_exp(Mstar, SFR, z)
+                else:
+                    SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
+                self.SFH = np.zeros(self.ages-1)
+                self.SFH[:len(SFH_short)] = np.array(SFH_short)
+                self.SFH /= 10**6
+
+        except AttributeError:  #not even set-up
 
             if SFH_samp is None:
                 SFH_short, self.index_age =  get_SFH_exp(Mstar, SFR, z)
@@ -420,7 +428,7 @@ class bpass_loader:
         #bet_n_to_sum = np.array(bet_n_to_sum)
         SED_summed_p = np.sum(bet_p, axis=0)
         SED_summed_n = np.sum(bet_n, axis=0)
-        print(np.shape(SED_summed_p))
+        #print(np.shape(SED_summed_p))
         SED_interp = np.zeros(np.shape(SED_summed_p)[0])
         for wv_ind in range(np.shape(SED_summed_p)[0]):
             SED_interp[wv_ind] = np.interp(metal, [met_prev, met_next], [SED_summed_p[wv_ind], SED_summed_n[wv_ind]])
