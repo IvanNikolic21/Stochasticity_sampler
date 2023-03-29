@@ -45,8 +45,13 @@ if __name__=='__main__':
     sample_SFR = sys.argv[8]
     sample_emiss = sys.argv[9]
     sample_Poiss = sys.argv[10]
-
-    R_bias = 5
+    try:
+        R_bias = float(sys.argv[11])
+        f_esc_option = str(sys.argv[12])
+    except IndexError:
+        print("Setting to defaults")
+        R_bias = 5
+        f_esc_option = 'binary' 
 
     if sample_SFR in ["False", "FALSE", "false", "0", "No"]:
         sample_SFR = False
@@ -105,7 +110,7 @@ if __name__=='__main__':
     f.attrs["sample_emiss"] = sample_emiss
     f.attrs["sample_Poiss"] = sample_Poiss
     f.close()
-
+    print('Sampling blah')
     for index,z in enumerate(np.linspace(z_init,z_end,z_steps)):
         f = h5py.File(filename, 'a')
         f.create_group(str(z))
@@ -120,6 +125,22 @@ if __name__=='__main__':
         #container.create_file()
         #container.create_redshift()
         #container.add_Rbias(R_bias)
+       # Sampler_ALL(emissivities_x_list= [],
+       #             emissivities_lw_list= [],
+       #             emissivities_uv_list=[],
+       #             z= z,
+       #             dlog10m= dlog10m,
+       #             N_iter= N_iter,
+       #             R_bias= R_bias,
+       #             log10_Mmin= 5.0,
+       #             mass_binning= 1,
+       #             sample_hmf= sample_Poiss,
+       #             sample_SFR= sample_SFR,
+       #             sample_emiss= sample_emiss,
+       #             bpass_read= bpass_read,
+       #             filename= filename,
+       #             control_run= True,
+       #             )
         with Manager() as manager:
             if wavelength!='all':
                 emissivities = manager.list()
@@ -170,7 +191,7 @@ if __name__=='__main__':
                                         'bpass_read': bpass_read})
                 elif wavelength == 'all':
                     time_start_sampling = time.time()
-                    print("Currently in the function run.py, starting to sample soon:", time_start_sampling - time_start_run)
+                    #print("Currently in the function run.py, starting to sample soon:", time_start_sampling - time_start_run)
                     # p = Process(target = Sampler_ALL,
                     #            kwargs={'emissivities_x_list': emissivities_x,
                     #                   'emissivities_lw_list': emissivities_lw,
@@ -187,7 +208,6 @@ if __name__=='__main__':
                     #                   'bpass_read': bpass_read,
                     #                   'main_pid': current_pid,
                     #                   })
-
                     pool.apply_async(Sampler_ALL,
                                      kwds = {
                                          'emissivities_x_list': emissivities_x,
@@ -204,12 +224,14 @@ if __name__=='__main__':
                                          'sample_emiss': sample_emiss,
                                          'bpass_read': bpass_read,
                                          'filename': filename,
+                                         'control_run': True,
+                                         'f_esc_option' : f_esc_option,
                                      },
                                      callback=saving_function,
                                      error_callback = error_function)
 
                     time_end_sampling = time.time()
-                    print("Finished sampling for this redshift, for", N_iter,"iterations, it took", time_end_sampling-time_start_sampling)
+                    #print("Finished sampling for this redshift, for", N_iter,"iterations, it took", time_end_sampling-time_start_sampling)
                 else: 
                     raise ValueError('Wrong wavelenght string!')
                 #processes.append(p)
