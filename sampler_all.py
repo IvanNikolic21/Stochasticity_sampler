@@ -1,6 +1,5 @@
 """"Contains sampler of all three things at the same time"""
 import os
-import math
 from hmf import integrate_hmf as ig_hmf
 from sfr import SFRvsMh_lin
 from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant, sigma_SFR_constant
@@ -16,7 +15,7 @@ from fesc import fesc_distr
 from numpy.random import normal
 import time
 from save import HdF5Saver
-
+import h5py
 
 class Sampler_Output:
     """
@@ -41,7 +40,8 @@ def Sampler_ALL(emissivities_x_list,
                 sample_hmf = True,
                 sample_densities = True, 
                 sample_SFR = True,
-                sample_emiss = True,        
+                sample_emiss = True,
+                sample_met = True,
                 calculate_2pcc = False,     #2pcc correction to # of halos.
                 duty_cycle = True,          #whether to turn of duty cycle.
                 sample_Ms = True,        #also sampling metlaicity with this
@@ -50,6 +50,8 @@ def Sampler_ALL(emissivities_x_list,
                 bpass_read = None,
                 filename = None,
                 control_run = False,
+                proc_number = 0,
+                get_previous = False,
            ):
     print("Started sampling!")
     M_turn = 5*10**8  #Park+19 parametrization
@@ -65,7 +67,7 @@ def Sampler_ALL(emissivities_x_list,
     #     '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
     # )
 
-    if sample_densities and not control_run:
+    if sample_densities and not control_run and not get_previous:
 
         delta_list = _sample_densities(z, 
                                        N_iter, 
@@ -82,7 +84,7 @@ def Sampler_ALL(emissivities_x_list,
         delta_lin_values= nonlin(delta_nonlin)
         time_finished_densities = time.time()
         #print("h5 initialization, and density sampling took", time_finished_densities-time_enter_sampler)        
-    elif not sample_densities and not control_run:
+    elif not sample_densities and not control_run and not get_previous:
 
         if delta_bias==0.0:
             hmf_this = hmf.MassFunction(z = z, 
@@ -184,6 +186,14 @@ def Sampler_ALL(emissivities_x_list,
                 z,
                 direc = '/home/inikolic/projects/stochasticity/_cache'
             )
+        elif get_previous:
+            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh.h5','r') as f_prev:
+                delta_bias = np.array(f_prev[str(proc_number)][str(i)].attrs['delta'])
+                class_int = Sampler_Output(delta_bias)
+                setattr(class_int, 'filename', filename)
+                setattr(class_int, 'redshift', z)
+                mhs = np.array(f_prev[str(proc_number)][str(i)]['Mh'])
+                N_this_iter = len(mhs)
 
         time_is_now = time.time()
         #print("Time for mass sampling", time_is_now - time_is_up)
@@ -197,11 +207,11 @@ def Sampler_ALL(emissivities_x_list,
                 mhs[ind] = np.interp(rand, np.flip(N_cs_norm), np.flip(masses))
         
         masses_saved = []
-        if duty_cycle and not control_run:
+        if duty_cycle and not control_run and not get_previous:
             for index, mass in enumerate(mhs):
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
                     masses_saved.append(mass)
-        elif control_run:
+        elif control_run or get_previous:
             masses_saved = mhs #duty cycle already applied
 
         #container.add_halo_masses(np.array(masses_saved))
@@ -239,12 +249,12 @@ def Sampler_ALL(emissivities_x_list,
                         SFR_mean = 10 ** (a_SFR * np.log10(Ms_mean) + b_SFR)  
                         Z_mean = metalicity_from_FMR(Ms_mean, SFR_mean)
                         a_Lx_mean, b_Lx_mean =  Lx_SFR(Z_mean)
-                        b_Ms -= 1/2  *  np.log(10) * sMs**2
-                        b_SFR -= np.log(10) * sSFR**2 / 2
+                        #b_Ms -= 1/2  *  np.log(10) * sMs**2
+                        #b_SFR -= np.log(10) * sSFR**2 / 2
 
-                    else:
-                        b_Ms -= np.log(10) * sMs**2 / 2
-                        b_SFR -= np.log(10) * sSFR**2 / 2
+                    #else:
+                        #b_Ms -= np.log(10) * sMs**2 / 2
+                        #b_SFR -= np.log(10) * sSFR**2 / 2
                     Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms), sMs))
                     logmstar = np.log10(Ms_sample)
 
@@ -257,7 +267,7 @@ def Sampler_ALL(emissivities_x_list,
                                                             True,
                                                         )
                     sMs = sigma_SHMR_constant()
-                    b_Ms -= np.log(10) * sMs ** 2 / 2
+                    #b_Ms -= np.log(10) * sMs ** 2 / 2
                     Ms_sample = 10**(normal((a_Ms*logm + b_Ms), sMs))
                     logmstar = np.log10(Ms_sample)
                     
@@ -270,7 +280,7 @@ def Sampler_ALL(emissivities_x_list,
                                             )
            	
                     sSFR = sigma_SFR_constant() #might not be accurate here
-                    b_SFR -= np.log(10) * sSFR**2 / 2
+                    #b_SFR -= np.log(10) * sSFR**2 / 2
                     SFR_samp = 10**(normal((a_SFR*logm + b_SFR), sSFR))
                 else:
                     a_SFR, b_SFR = sfr_ms_mh_21cmmc(
@@ -282,7 +292,7 @@ def Sampler_ALL(emissivities_x_list,
     #        print("Getting stellar mass took:", time_for_stellar_mass - time_inside_loop, flush=True)
             ######################LUMINOSITIES PART#############################
             #########################X_RAYS FIRST###############################
-            if sample_Ms:
+            if sample_met:
                 if sample_emiss :
                     Z_mean = Zahid_metal(Ms_sample, z)
                     sigma_Z = sigma_metalicity_const()
@@ -295,7 +305,7 @@ def Sampler_ALL(emissivities_x_list,
                     a_Lx, b_Lx = Brorby_lx(Z_sample)
                     #a_Lx, b_Lx = Brorby_lx(Z_sample)
                     sigma_Lx = sigma_Lx_const()
-                    b_Lx -= np.log(10) * sigma_Lx**2 / 2   #shift to median      
+                    #b_Lx -= np.log(10) * sigma_Lx**2 / 2   #shift to median
  
                     Lx_sample = 10**normal(a_Lx * logsfr + b_Lx,sigma_Lx)
                     #print("Currently SFR and stellar mass", logsfr, logmstar, "Metalicity is this", Z_sample, "and finally Lx", np.log10(Lx_sample))
@@ -303,7 +313,7 @@ def Sampler_ALL(emissivities_x_list,
                     logsfr = np.log10(SFR_samp)
                     Z_mean = Zahid_metal(Ms_sample, z)
                     sigma_Z = sigma_metalicity_const()
-                    Z_mean -= np.log(10) * sigma_Z**2 / 2
+                    #Z_mean -= np.log(10) * sigma_Z**2 / 2
 
                     Z_sample = normal(Z_mean, sigma_Z)
 
@@ -311,19 +321,19 @@ def Sampler_ALL(emissivities_x_list,
                     Lx_sample = 10**(a_Lx*logsfr+b_Lx)
             else:
                 if sample_emiss:
-                    a_Ms, b_Ms = ms_mh_21cmmc()
-                    Ms_sample = 10**(a_Ms * logm + b_Ms)
+                    #a_Ms, b_Ms = ms_mh_21cmmc()
+                    #Ms_sample = 10**(a_Ms * logm + b_Ms)
                     logsfr = np.log10(SFR_samp)
                     Z_mean = Zahid_metal(Ms_sample, z)
                     
                     a_Lx, b_Lx = Brorby_lx(Z_mean)
                     sigma_Lx = sigma_Lx_const()
-                    b_Lx -= np.log(10) * sigma_Lx**2 / 2 
+                    #b_Lx -= np.log(10) * sigma_Lx**2 / 2
                     Lx_sample = 10**normal(a_Lx * logsfr + b_Lx,sigma_Lx)
                 
                 else:
-                    a_Ms, b_Ms = ms_mh_21cmmc()
-                    Ms_sample = 10**(a_Ms * logm + b_Ms)
+                    #a_Ms, b_Ms = ms_mh_21cmmc()
+                    #Ms_sample = 10**(a_Ms * logm + b_Ms)
                     logsfr = np.log10(SFR_samp)
                     Z_mean = Zahid_metal(Ms_sample, z)
                     
@@ -418,7 +428,8 @@ def Sampler_ALL(emissivities_x_list,
         setattr(class_int, 'L_uv', np.array(L_UV))
         setattr(class_int, 'L_lyc', np.array(L_LyC))
         setattr(class_int, 'uv_lf', np.array(UV_lf))
-
+        setattr(class_int, 'proc_number', proc_number)
+        setattr(class_int, 'iter_number', i)
 
 
         # container.add_stellar_masses(np.array(Mstar_samples))

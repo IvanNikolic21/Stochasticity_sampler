@@ -196,6 +196,11 @@ def saving_function(class_list):
         hdf[str(redshift)].create_group(str(delta))
         hdf[str(redshift)][str(delta)].attrs['delta'] = delta
 
+        if hasattr(file, 'proc_number'):
+            hdf[str(redshift)][str(delta)].attrs['proc_number'] = file.proc_number
+        if hasattr(file, 'iter_number'):
+            hdf[str(redshift)][str(delta)].attrs['iter_number'] = file.iter_number
+
         hdf[str(redshift)][str(delta)].create_dataset(
             "SFH",
             dtype="float",
