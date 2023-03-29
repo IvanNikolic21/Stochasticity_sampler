@@ -46,7 +46,9 @@ if __name__=='__main__':
     sample_emiss = sys.argv[9]
     sample_Poiss = sys.argv[10]
 
-    R_bias = 5
+    R_bias = int(sys.argv[11])
+    f_esc_option=str(sys.argv[12])
+
 
     if sample_SFR in ["False", "FALSE", "false", "0", "No"]:
         sample_SFR = False
@@ -204,6 +206,7 @@ if __name__=='__main__':
                                          'sample_emiss': sample_emiss,
                                          'bpass_read': bpass_read,
                                          'filename': filename,
+                                         'f_esc_option': f_esc_option,
                                      },
                                      callback=saving_function,
                                      error_callback = error_function)
