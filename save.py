@@ -205,95 +205,95 @@ def saving_function(class_list):
             "SFH",
             dtype="float",
             data=file.SFH,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "uv_lf",
             dtype="float",
             data=file.uv_lf,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "nion",
             dtype="float",
             data=file.nion,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "beta",
             dtype="float",
             data=file.beta,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "L_LyC",
             dtype="float",
             data=file.L_lyc,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "L_uv",
             dtype="float",
             data=file.L_uv,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "L_lw",
             dtype="float",
             data=file.L_lw,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "L_x",
             dtype="float",
             data=file.L_x,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "metallicity",
             dtype="float",
             data=file.metallicity,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "SFR",
             dtype="float",
             data=file.SFR,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "stellar_masses",
             dtype="float",
             data=file.stellar_masses,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "halo_masses",
             dtype="float",
             data=file.halo_masses,
-            compression='gzip',
-            compression_opts=9,
+            #compression='gzip',
+            #compression_opts=9,
         )
     hdf.close()
