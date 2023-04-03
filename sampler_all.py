@@ -126,7 +126,7 @@ def Sampler_ALL(emissivities_x_list,
     #print("Starting the iteration", flush=True)
     for i in range(N_iter):
         start = time.time()
-        if sample_densities and not control_run:
+        if sample_densities and not control_run and not get_previous:
 
             delta_bias = delta_list[i]
             delta_bias_before = float(delta_bias)

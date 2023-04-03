@@ -130,22 +130,27 @@ if __name__=='__main__':
         #container.create_file()
         #container.create_redshift()
         #container.add_Rbias(R_bias)
-       # Sampler_ALL(emissivities_x_list= [],
-       #             emissivities_lw_list= [],
-       #             emissivities_uv_list=[],
-       #             z= z,
-       #             dlog10m= dlog10m,
-       #             N_iter= N_iter,
-       #             R_bias= R_bias,
-       #             log10_Mmin= 5.0,
-       #             mass_binning= 1,
-       #             sample_hmf= sample_Poiss,
-       #             sample_SFR= sample_SFR,
-       #             sample_emiss= sample_emiss,
-       #             bpass_read= bpass_read,
-       #             filename= filename,
-       #             control_run= True,
-       #             )
+        #Sampler_ALL(emissivities_x_list= [],
+        #            emissivities_lw_list= [],
+        #            emissivities_uv_list=[],
+        #            z = z,
+        #            dlog10m = inputs.dlog10m,
+        #            N_iter =  inputs.N_iter,
+        #            R_bias = inputs.R_bias,
+        #            log10_Mmin = 5.0,
+        #            mass_binning = 1,
+        #            sample_hmf = sample_Poiss,
+        #            sample_SFR = sample_SFR,
+        #            sample_emiss = sample_emiss,
+        #            sample_met = inputs.sample_met,
+        #            bpass_read = bpass_read,
+        #            filename = filename,
+        #            control_run= inputs.control_run,
+        #            f_esc_option = inputs.f_esc_option,
+ #                   #proc_number = i,
+        #            get_previous = inputs.get_previous,
+# 
+         #           )
         with Manager() as manager:
             if inputs.wavelength!='all':
                 emissivities = manager.list()
