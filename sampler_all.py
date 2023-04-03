@@ -188,11 +188,11 @@ def Sampler_ALL(emissivities_x_list,
             )
         elif get_previous:
             with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh.h5','r') as f_prev:
-                delta_bias = np.array(f_prev[str(z)][str(proc_number)][str(i)].attrs['delta'])
+                delta_bias = np.array(f_prev[str(z)][str(float(proc_number))][str(float(i))].attrs['delta'])
                 class_int = Sampler_Output(delta_bias)
                 setattr(class_int, 'filename', filename)
                 setattr(class_int, 'redshift', z)
-                mhs = np.array(f_prev[str(proc_number)][str(i)]['Mh'])
+                mhs = np.array(f_prev[str(z)][str(float(proc_number))][str(float(i))]['Mh'])
                 N_this_iter = len(mhs)
 
         time_is_now = time.time()
