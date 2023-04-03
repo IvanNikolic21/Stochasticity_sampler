@@ -58,17 +58,17 @@ if __name__=='__main__':
     inputs = parser.parse_args()
     assert inputs.control_run!= True or inputs.get_previous!=True, "Not compatible combination"
 
-    if inputs.sample_SFR in ["False", "FALSE", "false", "0", "No"]:
+    if inputs.sample_SFR in ["False", "FALSE", "false", "0", "No"] or inputs.sample_SFR==False:
         sample_SFR = False
     else: 
         sample_SFR = True
 
-    if inputs.sample_emiss in ["False", "FALSE", "false", "0", "No"]:
+    if inputs.sample_emiss in ["False", "FALSE", "false", "0", "No"] or inputs.sample_emiss==False:
         sample_emiss = False
     else:
         sample_emiss = True
 
-    if inputs.sample_Poiss in ["False", "FALSE", "false", "0", "No"]:
+    if inputs.sample_Poiss in ["False", "FALSE", "false", "0", "No"] or inputs.sample_Poiss==False:
         sample_Poiss = False
     else:
         sample_Poiss = True
