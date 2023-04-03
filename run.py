@@ -56,7 +56,7 @@ if __name__=='__main__':
     parser.add_argument("--get_previous", type=bool, default=False)
 
     inputs = parser.parse_args()
-    assert inputs.control_run!= True and inputs.get_previous!=True, "Not compatible combination"
+    assert inputs.control_run!= True or inputs.get_previous!=True, "Not compatible combination"
 
     if inputs.sample_SFR in ["False", "FALSE", "false", "0", "No"]:
         sample_SFR = False
