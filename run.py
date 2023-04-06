@@ -72,6 +72,11 @@ if __name__=='__main__':
         sample_Poiss = False
     else:
         sample_Poiss = True
+
+    if inputs.no_met_sampling:
+        sample_met = False
+    else:
+        sample_met = True
     
     assert type(sample_SFR) == bool, "Something went wrong, type is not boolean"
 
@@ -232,7 +237,7 @@ if __name__=='__main__':
                                          'sample_hmf': sample_Poiss,
                                          'sample_SFR': sample_SFR,
                                          'sample_emiss': sample_emiss,
-                                         'sample_met' : inputs.sample_met,
+                                         'sample_met' : sample_met,
                                          'bpass_read': bpass_read,
                                          'filename': filename,
                                          'control_run': inputs.control_run,
