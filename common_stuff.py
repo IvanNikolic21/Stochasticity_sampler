@@ -10,6 +10,7 @@ from numpy.random import normal
 from astropy.cosmology import z_at_value
 from astropy import units
 import h5py
+from chmf import chmf as my_chmf
 
 from scipy.interpolate import InterpolatedUnivariateSpline as _spline
 import scipy.integrate as intg
@@ -94,7 +95,7 @@ def hmf_integral_gtm(M, dndm, mass_density=False):
     return ngtm# + int_upper
 
 
-def _sample_densities(z, N, Mmin, Mmax, dlog10m, R_bias):
+def _sample_densities_old(z, N, Mmin, Mmax, dlog10m, R_bias):
     """
         sample overdensities a number of times.
     """
@@ -133,6 +134,60 @@ def _sample_densities(z, N, Mmin, Mmax, dlog10m, R_bias):
         delta_list[index] = nonlin(delta_list[index] * hmfi.growth_factor)
     
     return delta_list
+
+
+def _sample_densities(z, N, Mmin, Mmax, dlog10m, R_bias):
+    """
+    Sample densities at a given redshifts and for a given radius. This function
+    takes into account that we are looking at he fixed *Eulerian* radius, but
+    that we are interested in the Lagrangian densities, as they are the ones
+    going into the halo mass functions. Densities are sampled by calculating
+    sigma(d_l|R) and sampling from a Gaussian with that width. Also first
+    crossing shift is taken into account.
+    """
+
+    #densities over which we are calculating distributions.
+    d_l_z = np.linspace(-0.99999, 15, 1000000)
+
+    #Lagrangian radii for a fixed Eulerian.
+    R_l = R_bias * (1 + d_l_z) ** (1 / 3)
+
+    #Initialize my chmf, where sigmas are calculated.
+    mci = my_chmf(z, 0.0, R_bias)
+    mci.prep_for_hmf(log10_Mmin = Mmin, log10_Mmax=Mmax, dlog10m=dlog10m)
+
+    #radii list for interpolation
+    R_list = mci.MtoR(mci.bins)
+
+    #sigma list for interpolation. at z= 0, important.
+    sigma_list_0 = mci.sigma_z0_array
+
+    #linearly interpolated densities at z=0
+    d_l_0 = d_l_z / mci.dicke()
+
+    #interpolated sigmas for given Lagrangian densities, at z=z
+    sigma_b_z = np.interp(R_l, R_list, sigma_list_0 * mci.dicke())
+
+    delta_crit = 1.68647
+    def B(delta, z):
+        """
+        Barrier function for deltas. From Sheth+1998.
+        """
+        return delta_crit * (1+z) - delta_crit * (1+z) * (1-delta/(1+z)/delta_crit)
+
+    #Gaussian with all of the ingredient. Again, Trapp & Furlanetto 2020.
+    pref = 1 / np.sqrt(2 * np.pi * sigma_b_z**2)
+    gauss = np.exp(- 0.5 * B(d_l_0, z)**2 /sigma_b_z**2)
+    normalization = B(delta_crit*(1+z), z) /sigma_b_z**2 / (1+d_l_z)
+
+    gauss = gauss * pref * normalization
+
+    #now sample from the cumulative distribution
+    random = np.random.random(N)
+    gauss_cumul = integrate.cumtrapz(gauss, d_l_z)
+    deltas_samp = np.interp(random, gauss_cumul / gauss_cumul[-1], d_l_z[1:])
+
+    return deltas_samp
 
 def _sample_halos_old(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     """
