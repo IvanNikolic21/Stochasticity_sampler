@@ -44,10 +44,10 @@ if __name__=='__main__':
     parser.add_argument("--N_iter", type=int, default = 100)
     parser.add_argument("--n_processes", type=int, default = 1)
 
-    parser.add_argument("--sample_SFR", type=bool, default=True)
-    parser.add_argument("--sample_emiss", type=bool, default=True)
-    parser.add_argument("--sample_Poiss", type=bool, default=True)
-    parser.add_argument("--sample_met", type=bool, default = True)
+    parser.add_argument("--no_SFR_sampling", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--no_emiss_sampling", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--no_Poiss_sampling",  action=argparse.BooleanOptionalAction)
+    parser.add_argument("--no_met_sampling",  action=argparse.BooleanOptionalAction)
 
     parser.add_argument("--R_bias", type=float, default=5.0)
     parser.add_argument("--f_esc_option", type=str, default='binary')
@@ -58,17 +58,17 @@ if __name__=='__main__':
     inputs = parser.parse_args()
     assert inputs.control_run!= True or inputs.get_previous!=True, "Not compatible combination"
 
-    if inputs.sample_SFR in ["False", "FALSE", "false", "0", "No"] or inputs.sample_SFR==False:
+    if inputs.no_SFR_sampling:
         sample_SFR = False
     else: 
         sample_SFR = True
 
-    if inputs.sample_emiss in ["False", "FALSE", "false", "0", "No"] or inputs.sample_emiss==False:
+    if inputs.no_emiss_sampling:
         sample_emiss = False
     else:
         sample_emiss = True
 
-    if inputs.sample_Poiss in ["False", "FALSE", "false", "0", "No"] or inputs.sample_Poiss==False:
+    if inputs.no_Poiss_sampling:
         sample_Poiss = False
     else:
         sample_Poiss = True
