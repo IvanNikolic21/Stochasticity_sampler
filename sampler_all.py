@@ -80,10 +80,6 @@ def Sampler_ALL(emissivities_x_list,
         hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
         hmf_this.prep_collapsed_fractions()
     
-        delta_nonlin = np.linspace(-0.99,10)
-        delta_lin_values= nonlin(delta_nonlin)
-        time_finished_densities = time.time()
-        #print("h5 initialization, and density sampling took", time_finished_densities-time_enter_sampler)        
     elif not sample_densities and not control_run and not get_previous:
 
         if delta_bias==0.0:
@@ -128,16 +124,12 @@ def Sampler_ALL(emissivities_x_list,
         start = time.time()
         if sample_densities and not control_run and not get_previous:
 
+            #new 06/04/23: this is Lagrangian density at z=z going into chmf.
             delta_bias = delta_list[i]
-            delta_bias_before = float(delta_bias)
-            delta_bias = np.interp(delta_bias, delta_lin_values, delta_nonlin)
-            delta_bias /= hmf_this.dicke()
 
             class_int = Sampler_Output(delta_bias)
             setattr(class_int, 'filename', filename)
             setattr(class_int, 'redshift', z)
-
-            # delta_container = container.add_delta_group(delta_bias)
 
             masses = hmf_this.bins
             mass_func = hmf_this.ST_hmf(delta_bias)
