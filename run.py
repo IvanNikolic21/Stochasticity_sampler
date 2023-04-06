@@ -52,11 +52,11 @@ if __name__=='__main__':
     parser.add_argument("--R_bias", type=float, default=5.0)
     parser.add_argument("--f_esc_option", type=str, default='binary')
 
-    parser.add_argument("--control_run", type=bool, default=False)
-    parser.add_argument("--get_previous", type=bool, default=False)
+    parser.add_argument("--control_run", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--use_previous_run", action=argparse.BooleanOptionalAction)
 
     inputs = parser.parse_args()
-    assert inputs.control_run!= True or inputs.get_previous!=True, "Not compatible combination"
+    assert inputs.control_run!= True or inputs.use_previous_run!=True, "Not compatible combination"
 
     if inputs.no_SFR_sampling:
         sample_SFR = False
@@ -238,7 +238,7 @@ if __name__=='__main__':
                                          'control_run': inputs.control_run,
                                          'f_esc_option' : inputs.f_esc_option,
                                          'proc_number' : i,
-                                         'get_previous' : inputs.get_previous,
+                                         'get_previous' : inputs.use_previous_run,
                                      },
                                      callback=saving_function,
                                      error_callback = error_function)
