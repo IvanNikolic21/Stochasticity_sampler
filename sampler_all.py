@@ -78,7 +78,7 @@ def Sampler_ALL(emissivities_x_list,
         #np.savetxt('/home/inikolic/projects/stochasticity/samples/density{}.txt'.format(z), np.array(delta_list)) 
         hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = R_bias)
         hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
-        hmf_this.prep_collapsed_fractions()
+        hmf_this.prep_collapsed_fractions(check_cache=True)
     
     elif not sample_densities and not control_run and not get_previous:
 
@@ -340,10 +340,11 @@ def Sampler_ALL(emissivities_x_list,
                 
                 Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
                 F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z, SFH_samp = SFH_samp)
+           #     F_UV = SFR_samp / 1.15 * 1e28
                 
             else:
                 F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z, SFH_samp=SFH_samp)
-
+            #    F_UV = SFR_samp / 1.15 * 1e28 
             #######################END OF UV PART###############################
             #####################START OF LW PART###############################
             if sample_Ms:
@@ -407,7 +408,7 @@ def Sampler_ALL(emissivities_x_list,
             L_LW[j] = F_LW
             L_LyC[j] = F_LyC
 
-        M_uv = get_Muv(L_UV)
+        M_uv = get_Muv(L_UV, solar_mult=True)
         UV_lf, _ = get_uvlf(M_uv, Rbias=R_bias)
 
         setattr(class_int, 'stellar_masses', np.array(Mstar_samples))

@@ -187,7 +187,7 @@ def _sample_densities(z, N, Mmin, Mmax, dlog10m, R_bias):
     gauss_cumul = integrate.cumtrapz(gauss, d_l_z)
     deltas_samp = np.interp(random, gauss_cumul / gauss_cumul[-1], d_l_z[1:])
 
-    return deltas_samp
+    return deltas_samp / mci.dicke()
 
 def _sample_halos_old(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     """
@@ -396,8 +396,9 @@ def _sample_halos(
                 N_actual = round(N_mean_list)
 
             rn_now = np.random.uniform(size = int(N_actual))
-            for index, rn in enumerate(rn_now):
-                m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+            #for index, rn in enumerate(rn_now):
+            #    m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+            m_haloes = np.interp(rn_now, np.flip(N_cs), np.flip(mx[inds]))
 
         else:
             N_actual = np.zeros(nbins)
@@ -421,9 +422,9 @@ def _sample_halos(
                     N_actual[k] = round(N_mean_list[k])
                 #print(N_actual)
                 rn_now = np.random.uniform(size = int(N_actual[k]))
-                for index, rn in enumerate(rn_now):
-                    m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
-
+                #for index, rn in enumerate(rn_now):
+                #    m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
+                m_haloes.append(np.interp(rn_now, np.flip(N_cs), np.flip(mx[inds])))
     else:
         inds = [b for b, m in enumerate(mx) if
                 m > 10 ** Mmin and m < 10 ** Mmax]
@@ -572,20 +573,25 @@ class SFH_sampler:
             Mstar -= SFH[-1] * (self.ages_SFH[index+1] - self.ages_SFH[index])
         return np.array(SFH), self.index_age
 
-def get_Muv(L_uv):
+def get_Muv(L_uv, solar_mult = True):
     """
         Computes UV magnitudes out of UV luminosities (AB magnitudes)
         Input
         ----------
         L_uv : ndarray-like,
             scalar or array-like UV luminosity(ies).
+        solar_mult : boolean, optional
+            whether to switch to ergs from solar lumunosities. Default is True
         Returns
         ----------
         M_uv : ndarray-like,
             scalar or array-like UV magnitudes.
     """
+    if solar_mult:
+        return np.array([-2.5 * np.log10(i * 3.846 * 1e33) + 51.6 for i in L_uv])
+    else:
+        return np.array([-2.5 * np.log10(i) + 51.6 for i in L_uv])
 
-    return np.array([-2.5 * np.log10(i * 3.846 * 1e33) + 51.6 for i in L_uv])
 
 def get_uvlf(M_uv, nbins=100, Mmin=-25, Mmax=-5, Rbias=5.0):
     """
