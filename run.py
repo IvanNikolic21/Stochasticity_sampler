@@ -131,15 +131,19 @@ if __name__=='__main__':
         SFH_samp = SFH_sampler(z)
         if not inputs.control_run and not inputs.use_previous_run:
             delta_list = _sample_densities(z,
-                                           inputs.N_iter,
+                                           inputs.N_iter * inputs.n_processes,
                                            5.0,
                                            15.0,
                                            0.01,
                                            inputs.R_bias)
+            delta_list.reshape((inputs.N_iter, inputs.n_processes))
             # np.savetxt('/home/inikolic/projects/stochasticity/samples/density{}.txt'.format(z), np.array(delta_list))
             hmf_this = chmf(z=z, delta_bias=0.0, R_bias=inputs.R_bias)
             hmf_this.prep_for_hmf_st(5.0, 15.0, 0.01)
             hmf_this.prep_collapsed_fractions(check_cache=False)
+        else:
+            delta_list = np.zeros((inputs.N_iter, inputs.n_processes)) 
+            hmf_this = None
         #initialize the h5 file
 
         # container = HdF5Saver(
@@ -260,7 +264,7 @@ if __name__=='__main__':
                                              'f_esc_option' : inputs.f_esc_option,
                                              'proc_number' : i,
                                              'get_previous' : inputs.use_previous_run,
-                                             'density_inst' : delta_list[iter_num],
+                                             'density_inst' : delta_list[iter_num, i],
                                              'hmf_this' : hmf_this,
                                              'SFH_samp' : SFH_samp,
                                              'iter_num' : iter_num,
