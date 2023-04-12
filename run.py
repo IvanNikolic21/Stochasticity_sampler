@@ -24,6 +24,8 @@ from sampler_uv import Sampler_UV
 from sampler_lw import Sampler_LW
 from sampler_all import Sampler_ALL
 from bpass_read import bpass_loader
+from common_stuff import SFH_sampler, _sample_densities
+from chmf import chmf
 import os
 import time
 import sys
@@ -125,6 +127,19 @@ if __name__=='__main__':
         f = h5py.File(filename, 'a')
         f.create_group(str(z))
         f.close()
+
+        SFH_samp = SFH_sampler(z)
+        if not inputs.control_run and not inputs.use_previous_run:
+            delta_list = _sample_densities(z,
+                                           inputs.N_iter,
+                                           5.0,
+                                           15.0,
+                                           0.01,
+                                           inputs.R_bias)
+            # np.savetxt('/home/inikolic/projects/stochasticity/samples/density{}.txt'.format(z), np.array(delta_list))
+            hmf_this = chmf(z=z, delta_bias=0.0, R_bias=inputs.R_bias)
+            hmf_this.prep_for_hmf_st(5.0, 15.0, 0.01)
+            hmf_this.prep_collapsed_fractions(check_cache=False)
         #initialize the h5 file
 
         # container = HdF5Saver(
@@ -165,47 +180,48 @@ if __name__=='__main__':
                 emissivities_uv = manager.list()
             processes=[]
             pool = Pool(inputs.n_processes)
-            for i in range(inputs.n_processes):
-                if inputs.wavelength == 'X':
-                    p = Process(target=Sampler_x, 
-                                kwargs={'emissivities_list':emissivities,
-                                        'z':z, 
-                                        'dlog10m':inputs.dlog10m,
-                                        'N_iter':inputs.N_iter,
-                                        'R_bias':inputs.R_bias,  #default choices
-                                        'log10_Mmin':7.2, 
-                                        'mass_binning':150,
-                                        'sample_hmf':sample_Poiss,
-                                        'sample_SFR':sample_SFR,
-                                        'sample_Lx':sample_emiss})
-                elif inputs.wavelength == 'UV':
-                    p = Process(target=Sampler_UV,
-                                kwargs={'emissivities_list':emissivities,
-                                        'z':z,
-                                        'dlog10m':inputs.dlog10m,
-                                        'N_iter':inputs.N_iter,
-                                        'R_bias':inputs.R_bias,  #default choices
-                                        'log10_Mmin':7.2,
-                                        'mass_binning':150,
-                                        'sample_hmf':sample_Poiss,
-                                        'sample_SFR':sample_SFR,
-                                        'sample_UV':sample_emiss,
-                                        'bpass_read': bpass_read})
-                elif inputs.wavelength == 'LW':
-                    p = Process(target=Sampler_LW,
-                                kwargs={'emissivities_list':emissivities,
-                                        'z':z,
-                                        'dlog10m':inputs.dlog10m,
-                                        'N_iter':inputs.N_iter,
-                                        'R_bias':inputs.R_bias,  #default choices
-                                        'log10_Mmin':7.2,
-                                        'mass_binning':150,
-                                        'sample_hmf':sample_Poiss,
-                                        'sample_SFR':sample_SFR,
-                                        'sample_LW':sample_emiss,
-                                        'bpass_read': bpass_read})
-                elif inputs.wavelength == 'all':
-                    time_start_sampling = time.time()
+            for iter_num in range(inputs.N_iter):
+                for i in range(inputs.n_processes):
+                    if inputs.wavelength == 'X':
+                        p = Process(target=Sampler_x,
+                                    kwargs={'emissivities_list':emissivities,
+                                            'z':z,
+                                            'dlog10m':inputs.dlog10m,
+                                            'N_iter':inputs.N_iter,
+                                            'R_bias':inputs.R_bias,  #default choices
+                                            'log10_Mmin':7.2,
+                                            'mass_binning':150,
+                                            'sample_hmf':sample_Poiss,
+                                            'sample_SFR':sample_SFR,
+                                            'sample_Lx':sample_emiss})
+                    elif inputs.wavelength == 'UV':
+                        p = Process(target=Sampler_UV,
+                                    kwargs={'emissivities_list':emissivities,
+                                            'z':z,
+                                            'dlog10m':inputs.dlog10m,
+                                            'N_iter':inputs.N_iter,
+                                            'R_bias':inputs.R_bias,  #default choices
+                                            'log10_Mmin':7.2,
+                                            'mass_binning':150,
+                                            'sample_hmf':sample_Poiss,
+                                            'sample_SFR':sample_SFR,
+                                            'sample_UV':sample_emiss,
+                                            'bpass_read': bpass_read})
+                    elif inputs.wavelength == 'LW':
+                        p = Process(target=Sampler_LW,
+                                    kwargs={'emissivities_list':emissivities,
+                                            'z':z,
+                                            'dlog10m':inputs.dlog10m,
+                                            'N_iter':inputs.N_iter,
+                                            'R_bias':inputs.R_bias,  #default choices
+                                            'log10_Mmin':7.2,
+                                            'mass_binning':150,
+                                            'sample_hmf':sample_Poiss,
+                                            'sample_SFR':sample_SFR,
+                                            'sample_LW':sample_emiss,
+                                            'bpass_read': bpass_read})
+                    elif inputs.wavelength == 'all':
+                        time_start_sampling = time.time()
                     #print("Currently in the function run.py, starting to sample soon:", time_start_sampling - time_start_run)
                     # p = Process(target = Sampler_ALL,
                     #            kwargs={'emissivities_x_list': emissivities_x,
@@ -223,34 +239,38 @@ if __name__=='__main__':
                     #                   'bpass_read': bpass_read,
                     #                   'main_pid': current_pid,
                     #                   })
-                    pool.apply_async(Sampler_ALL,
-                                     kwds = {
-                                         'emissivities_x_list': emissivities_x,
-                                         'emissivities_lw_list': emissivities_lw,
-                                         'emissivities_uv_list': emissivities_uv,
-                                         'z': z,
-                                         'dlog10m': inputs.dlog10m,
-                                         'N_iter': inputs.N_iter,
-                                         'R_bias': inputs.R_bias,
-                                         'log10_Mmin': 5.0,
-                                         'mass_binning': 1,
-                                         'sample_hmf': sample_Poiss,
-                                         'sample_SFR': sample_SFR,
-                                         'sample_emiss': sample_emiss,
-                                         'sample_met' : sample_met,
-                                         'bpass_read': bpass_read,
-                                         'filename': filename,
-                                         'control_run': inputs.control_run,
-                                         'f_esc_option' : inputs.f_esc_option,
-                                         'proc_number' : i,
-                                         'get_previous' : inputs.use_previous_run,
-                                     },
-                                     callback=saving_function,
-                                     error_callback = error_function)
+                        pool.apply_async(Sampler_ALL,
+                                         kwds = {
+                                             'emissivities_x_list': emissivities_x,
+                                             'emissivities_lw_list': emissivities_lw,
+                                             'emissivities_uv_list': emissivities_uv,
+                                             'z': z,
+                                             'dlog10m': inputs.dlog10m,
+                                             'N_iter': inputs.N_iter,
+                                             'R_bias': inputs.R_bias,
+                                             'log10_Mmin': 5.0,
+                                             'mass_binning': 1,
+                                             'sample_hmf': sample_Poiss,
+                                             'sample_SFR': sample_SFR,
+                                             'sample_emiss': sample_emiss,
+                                             'sample_met' : sample_met,
+                                             'bpass_read': bpass_read,
+                                             'filename': filename,
+                                             'control_run': inputs.control_run,
+                                             'f_esc_option' : inputs.f_esc_option,
+                                             'proc_number' : i,
+                                             'get_previous' : inputs.use_previous_run,
+                                             'density_inst' : delta_list[iter_num],
+                                             'hmf_this' : hmf_this,
+                                             'SFH_samp' : SFH_samp,
+                                             'iter_num' : iter_num,
+                                         },
+                                         callback=saving_function,
+                                         error_callback = error_function)
 
-                    time_end_sampling = time.time()
-                else:
-                    raise ValueError('Wrong wavelength string!')
+                        time_end_sampling = time.time()
+                    else:
+                        raise ValueError('Wrong wavelength string!')
                 #processes.append(p)
                 #p.start()
              #   print(p.pid)
