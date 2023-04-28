@@ -133,7 +133,7 @@ class bpass_loader:
                     SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
                 self.SFH = np.zeros(self.ages-1)
                 self.SFH[:len(SFH_short)] = np.array(SFH_short)
-                self.SFH /= 10**6
+                self.SFH /= 1e6
 
         except AttributeError:  #not even set-up
 
@@ -143,7 +143,7 @@ class bpass_loader:
                 SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
             self.SFH = np.zeros(self.ages-1)
             self.SFH[:len(SFH_short)] = np.array(SFH_short)
-            self.SFH /= 10**6
+            self.SFH /= 1e6
         
         #wv_UV = self.wv[1450:1550]
         #UV_p = np.zeros(self.ages-1)
@@ -220,14 +220,13 @@ class bpass_loader:
                 SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
             self.SFH = np.zeros(self.ages - 1)
             self.SFH[:len(SFH_short)] = np.array(SFH_short)
-            self.SFH /= 10 ** 6
+            self.SFH /= 1e6
 
         #LyC_p = np.zeros(self.ages-1)
         #LyC_n = np.zeros(self.ages-1)
 
         LyC_p = self.SEDS[i-1,:, 911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
         LyC_n = self.SEDS[i,:, 911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
-        print("Got LyC")
 
         #for i in range(self.ages-1):
         #    LyC_p[i] = np.array(SEDp[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * ang_to_hz
@@ -299,7 +298,7 @@ class bpass_loader:
                 SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
             self.SFH = np.zeros(self.ages - 1)
             self.SFH[:len(SFH_short)] = np.array(SFH_short)
-            self.SFH /= 10 ** 6
+            self.SFH /= 1e6
 
         #wv_LW = self.wv[911:1107]
         #LW_p = np.zeros(self.ages-1)
@@ -307,7 +306,6 @@ class bpass_loader:
 
         LW_p = np.sum(self.SEDS[i-1,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
         LW_n = np.sum(self.SEDS[i,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
-        print("Got LW")
 
         #for i in range(self.ages-1):
         #    LW_p[i] = simps(np.array(SEDp[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
@@ -363,7 +361,7 @@ class bpass_loader:
                 SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
             self.SFH = np.zeros(self.ages - 1)
             self.SFH[:len(SFH_short)] = np.array(SFH_short)
-            self.SFH /= 10 ** 6
+            self.SFH /= 1e6
 
         wv_nion = self.wv[:912]
         #nion_p = np.zeros(self.ages - 1)
@@ -371,7 +369,6 @@ class bpass_loader:
 
         nion_p = np.sum(self.SEDS[i-1,:, :912] /(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
         nion_n = np.sum(self.SEDS[i,:, :912] / (6.626 * 1e-27 * wv_to_freq(wv_nion)), axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
-        print("Got nion")
         #for i in range(self.ages - 1):
         #    nion_p[i] = np.sum(np.array(SEDp[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i]) * 3.826 * 1e33
         #    nion_n[i] = np.sum(np.array(SEDn[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i]) * 3.826 * 1e33
@@ -426,7 +423,7 @@ class bpass_loader:
                 SFH_short, self.index_age = SFH_samp.get_SFH_exp(Mstar, SFR)
             self.SFH = np.zeros(self.ages - 1)
             self.SFH[:len(SFH_short)] = np.array(SFH_short)
-            self.SFH /= 10 ** 6
+            self.SFH /= 1e6
 
         wv_bet = self.wv[1216:3200]        #beta is usually derived redwards of Ly-a
         #bet_p = np.zeros((self.ages - 1, len(wv_bet)))
@@ -434,7 +431,6 @@ class bpass_loader:
 
         bet_p = self.SEDS[i-1,:, 1215:3199] * self.SFH[:,np.newaxis] * (self.ag[1:]-self.ag[:-1])[:,np.newaxis]
         bet_n = self.SEDS[i,:, 1215:3199] * self.SFH[:,np.newaxis] * (self.ag[1:]-self.ag[:-1])[:,np.newaxis]
-        print("got beta")
         #for i in range(self.ages-1):
         #    bet_p[i] = np.array(SEDp[i][1215:3199]) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
         #    bet_n[i] = np.array(SEDn[i][1215:3199]) * self.SFH[i] * (self.ag[i+1]- self.ag[i])

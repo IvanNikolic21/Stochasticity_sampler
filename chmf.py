@@ -9,6 +9,8 @@ from joblib import Parallel, delayed
 import scipy
 import scipy.interpolate
 from scipy.special import erfc
+from functools import cached_property
+
 
 class chmf:
     def z_drag_calculate(self):
@@ -75,13 +77,17 @@ class chmf:
         self.TFmdmparams_TFm = 1.84*self.beta_c*self.TFmdmparams_geff
         self.TFmdmparams_qnu = 3.92 / np.sqrt(self.f_nu/self.N_nu)
         self.TFmdmparams_TFm2 = (1.2*(self.f_nu**0.64)*(self.N_nu**(0.3+0.6*self.f_nu)))
+        self._dicke = None
+        self._sigma_cell = None
         
+    @cached_property
     def dicke(self):
-
-        OmegaM_z=cosmo.Om(self.z)
-        dick_z = 2.5*OmegaM_z / ( 1.0/70.0 + OmegaM_z*(209-OmegaM_z)/140.0 + pow(OmegaM_z, 4.0/7.0) )
-        dick_0 = 2.5*cosmo.Om0 / ( 1.0/70.0 + cosmo.Om0*(209-cosmo.Om0)/140.0 + pow(cosmo.Om0, 4.0/7.0) )
-        return dick_z / (dick_0 * (1.0+self.z))   
+        if self._dicke is None:
+            OmegaM_z=cosmo.Om(self.z)
+            dick_z = 2.5*OmegaM_z / ( 1.0/70.0 + OmegaM_z*(209-OmegaM_z)/140.0 + pow(OmegaM_z, 4.0/7.0) )
+            dick_0 = 2.5*cosmo.Om0 / ( 1.0/70.0 + cosmo.Om0*(209-cosmo.Om0)/140.0 + pow(cosmo.Om0, 4.0/7.0) )
+            self._dicke = dick_z / (dick_0 * (1.0+self.z))
+        return self._dicke
 
     def TFmdm(self,k):
         q = k*self.TFmdmparams_q
@@ -215,9 +221,12 @@ class chmf:
         return -(self.critical_density*cosmo.Om0)/M /np.sqrt(2*np.pi) \
             *delta*((sig_one**2)**(-1.5))*(np.e**( -0.5*delta**2/(sig_one**2))) \
             *self.dsigmasqdm_z0(M)
-    
+
+    @cached_property
     def sigma_cell(self):
-        return self.sigma_z0(self.M_bias)
+        if self._sigma_cell is None:
+            self._sigma_cell = self.sigma_z0(self.M_bias)
+        return self._sigma_cell
     
 #     def run_hmf(self, log10_Mmin = 6, log10_Mmax = 15, dlog10m = 0.01 ):
 #         self.log10_Mmin = log10_Mmin

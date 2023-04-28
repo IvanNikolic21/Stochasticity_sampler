@@ -63,8 +63,11 @@ def Sampler_ALL(emissivities_x_list,
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
     #SFH_samp = SFH_sampler(z)
     ########################INITIALIZE SOME SCALING LAWS########################
-    np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))    
-
+    np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))
+    a_SFR, b_SFR, a_Ms, b_Ms = sfr_ms_mh_21cmmc(
+        z,
+        True,
+    )
     # #initialize h5 file
     # container = HdF5Saver(
     #     z,
@@ -244,10 +247,7 @@ def Sampler_ALL(emissivities_x_list,
                 
             if sample_Ms:
                 if sample_SFR:
-                    a_SFR, b_SFR, a_Ms, b_Ms = sfr_ms_mh_21cmmc(
-                                                            z,
-                                                            True,
-                                                        )
+
                     sSFR = sigma_SFR_constant()
                     sMs = sigma_SHMR_constant()
                     time_inside_loop = time.time()
@@ -270,11 +270,7 @@ def Sampler_ALL(emissivities_x_list,
                     SFR_samp = 10**(normal((a_SFR * logmstar + b_SFR), sSFR))
                 #print("Currently halo mass", logm, "stellar mass", logmstar, "SFR now", np.log10(SFR_samp))
                 else:
-                     
-                    a_SFR, b_SFR, a_Ms, b_Ms = sfr_ms_mh_21cmmc(
-                                                            z,
-                                                            True,
-                                                        )
+
                     sMs = sigma_SHMR_constant()
                     #b_Ms -= np.log(10) * sMs ** 2 / 2
                     Ms_sample = 10**(normal((a_Ms*logm + b_Ms), sMs))
