@@ -113,6 +113,14 @@ if __name__=='__main__':
     else:
         filename = filename + '_emissFALSE_'
 
+    if sample_met:
+        filename = filename + '_metTrue_'
+    else:
+        filename = filename + '_metFalse_'
+
+    if inputs.f_esc_option != 'binary':
+        filename = filename + '_' + str(inputs.f_esc_option) + '_'
+
     filename = filename + str(sample_Poiss).upper()
     filename = filename +  '_' + str(datetime.datetime.now().date()) + '.h5'
 
@@ -122,7 +130,9 @@ if __name__=='__main__':
     f.attrs["sample_emiss"] = sample_emiss
     f.attrs["sample_Poiss"] = sample_Poiss
     f.close()
-    print('Sampling blah')
+
+    iter_per_par = 50 #Number of iterations to be performed in the sampler
+
     for index,z in enumerate(np.linspace(inputs.z_init,inputs.z_end,inputs.z_steps)):
         f = h5py.File(filename, 'a')
         f.create_group(str(z))
@@ -136,7 +146,7 @@ if __name__=='__main__':
                                            15.0,
                                            0.01,
                                            inputs.R_bias)
-            delta_list.reshape((inputs.N_iter, inputs.n_processes))
+            delta_list = delta_list.reshape((inputs.N_iter, inputs.n_processes))
             # np.savetxt('/home/inikolic/projects/stochasticity/samples/density{}.txt'.format(z), np.array(delta_list))
             hmf_this = chmf(z=z, delta_bias=0.0, R_bias=inputs.R_bias)
             hmf_this.prep_for_hmf_st(5.0, 15.0, 0.01)
@@ -154,27 +164,31 @@ if __name__=='__main__':
         #container.create_file()
         #container.create_redshift()
         #container.add_Rbias(R_bias)
-#        Sampler_ALL(emissivities_x_list= [],
- #                   emissivities_lw_list= [],
-  #                  emissivities_uv_list=[],
-   #                 z = z,
-    #                dlog10m = inputs.dlog10m,
-     #               N_iter =  inputs.N_iter,
-      #              R_bias = inputs.R_bias,
-       #             log10_Mmin = 5.0,
-        #            mass_binning = 1,
-         #           sample_hmf = sample_Poiss,
-          #          sample_SFR = sample_SFR,
-           #         sample_emiss = sample_emiss,
-            #        sample_met = inputs.sample_met,
-             #       bpass_read = bpass_read,
-              #      filename = filename,
-               #     control_run= inputs.control_run,
-                #    f_esc_option = inputs.f_esc_option,
-                 #   proc_number = 1.0,
-                  #  get_previous = inputs.get_previous,
- 
-                   # )
+        #Sampler_ALL(emissivities_x_list= [],
+                    #emissivities_lw_list= [],
+                    #emissivities_uv_list=[],
+                    #z = z,
+                    #dlog10m = inputs.dlog10m,
+                    #N_iter =  inputs.N_iter,
+                    #R_bias = inputs.R_bias,
+                    #log10_Mmin = 5.0,
+                    #mass_binning = 1,
+                    #sample_hmf = sample_Poiss,
+                    #sample_SFR = sample_SFR,
+                    #sample_emiss = sample_emiss,
+                    #sample_met = sample_met,
+                    #bpass_read = bpass_read,
+                    #filename = filename,
+                    #control_run= inputs.control_run,
+                    #f_esc_option = inputs.f_esc_option,
+                    #proc_number = 1.0,
+                    #get_previous = inputs.use_previous_run,
+                    #density_inst = delta_list[0, 0],
+                    #hmf_this = hmf_this,
+                    #SFH_samp = SFH_samp,
+                    #iter_num = 0,
+
+                    #)
         with Manager() as manager:
             if inputs.wavelength!='all':
                 emissivities = manager.list()
@@ -183,8 +197,8 @@ if __name__=='__main__':
                 emissivities_lw = manager.list()
                 emissivities_uv = manager.list()
             processes=[]
-            pool = Pool(inputs.n_processes)
-            for iter_num in range(inputs.N_iter):
+            pool = Pool(inputs.n_processes )
+            for iter_num in range(int(inputs.N_iter / iter_per_par)):
                 for i in range(inputs.n_processes):
                     if inputs.wavelength == 'X':
                         p = Process(target=Sampler_x,
@@ -226,7 +240,6 @@ if __name__=='__main__':
                                             'bpass_read': bpass_read})
                     elif inputs.wavelength == 'all':
                         time_start_sampling = time.time()
-                    #print("Currently in the function run.py, starting to sample soon:", time_start_sampling - time_start_run)
                     # p = Process(target = Sampler_ALL,
                     #            kwargs={'emissivities_x_list': emissivities_x,
                     #                   'emissivities_lw_list': emissivities_lw,
@@ -250,7 +263,7 @@ if __name__=='__main__':
                                              'emissivities_uv_list': emissivities_uv,
                                              'z': z,
                                              'dlog10m': inputs.dlog10m,
-                                             'N_iter': inputs.N_iter,
+                                             'N_iter': iter_per_par,
                                              'R_bias': inputs.R_bias,
                                              'log10_Mmin': 5.0,
                                              'mass_binning': 1,
@@ -264,7 +277,7 @@ if __name__=='__main__':
                                              'f_esc_option' : inputs.f_esc_option,
                                              'proc_number' : i,
                                              'get_previous' : inputs.use_previous_run,
-                                             'density_inst' : delta_list[iter_num, i],
+                                             'density_inst' : delta_list[iter_num * iter_per_par : (iter_num+1) * iter_per_par, i],
                                              'hmf_this' : hmf_this,
                                              'SFH_samp' : SFH_samp,
                                              'iter_num' : iter_num,
@@ -277,7 +290,6 @@ if __name__=='__main__':
                         raise ValueError('Wrong wavelength string!')
                 #processes.append(p)
                 #p.start()
-             #   print(p.pid)
 
            # for p in processes:
            #     p.join()
@@ -340,4 +352,3 @@ if __name__=='__main__':
         np.save(filename_x, np.array(emissivities_x_z, dtype = object))
         np.save(filename_lw, np.array(emissivities_lw_z, dtype = object))
         np.save(filename_uv, np.array(emissivities_uv_z, dtype = object))
-        print("From the end of sampling to end of everything it took", time.time()-time_end_sampling)

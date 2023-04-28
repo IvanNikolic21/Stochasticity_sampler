@@ -19,7 +19,7 @@ def fesc_distr(option = 'binary', Mh = None):
     """
     
     if option == 'binary':
-        return np.random.binomial(1, 0.5) #maximum variance.
+        return np.random.binomial(1, 0.053) #maximum variance.
     elif option == 'ksz_inference':
         f_esc10 = 0.053
         alpha_esc = 0.00

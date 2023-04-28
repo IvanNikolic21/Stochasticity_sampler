@@ -185,11 +185,15 @@ class HdF5Saver:
 
 def error_function(what):
     print("Something happened!")
-    raise ValueError("Check your function")
+    raise ValueError("Check your function", what)
 
 def saving_function(class_list):
     print("accessed saving function")
-    hdf = h5py.File(class_list[0].filename, 'a')
+    if hasattr(class_list, '__len__'):
+        hdf = h5py.File(class_list[0].filename, 'a')
+    else:
+        hdf = h5py.File(class_list.filename, 'a')
+        class_list = [class_list]
     for file in class_list:
         delta = file.delta
         redshift = file.redshift

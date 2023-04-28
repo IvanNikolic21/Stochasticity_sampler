@@ -393,10 +393,10 @@ class chmf:
         return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density * cosmo.Om0
     
     def prep_collapsed_fractions(self, check_cache=True):
-        if check_cache and os.path.exists('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m)):
+        if check_cache and os.path.exists('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.txt'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m)):
             print("Managed to read the sigma files")
-            self.derivative_ratios = np.load('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m))
-            self.collapsed_ratios = np.load('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m))
+            self.derivative_ratios = np.loadtxt('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.txt'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m))
+            self.collapsed_ratios = np.loadtxt('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.txt'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m))
         else:
             print("Didn't manage to read the sigma files.")
             bins_for_deriv = 10**np.arange(self.log10_Mmin-2 * self.dlog10m, self.log10_Mmax + 2*self.dlog10m, self.dlog10m)
@@ -417,23 +417,29 @@ class chmf:
             collapsed_ratios_spline = scipy.interpolate.InterpolatedUnivariateSpline(bins_for_deriv[:remember_index], collapsed_ratios_full[:remember_index])
             derivative_spline = collapsed_ratios_spline.derivative()
             self.derivative_ratios = derivative_spline(bins_for_deriv[2:remember_index])
-            self.collapsed_ratios = collapsed_ratios_full[2:-2]
+            self.collapsed_ratios = np.array(collapsed_ratios_full[2:-2])
 
-            np.save('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m), self.derivative_ratios)
-            np.save('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.npy'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m), self.collapsed_ratios)
+            np.savetxt('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.txt'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m), self.derivative_ratios)
+            np.savetxt('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.txt'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m), self.collapsed_ratios)
         return self.derivative_ratios
 
     def ST_hmf(self, delta_inst):
-        self.hmf_ST = np.zeros((len(self.bins)))
+        #self.hmf_ST = np.zeros((len(self.bins)))
         delta = self.Deltac/self.dicke() - delta_inst
         sigma_array = self.sigma_z0_array_st**2 - self.sigma_cell()**2
-        for index,mass in enumerate(self.bins):
-            if mass<self.M_bias and index<len(self.derivative_ratios):
-                biased_hmf_part = -(self.critical_density*cosmo.Om0)/self.bins[index]/np.sqrt(2*np.pi) * delta * ((sigma_array[index])**(-1.5)) * \
-                                (np.e**(-0.5*delta**2/(sigma_array[index]))) * self.sigma_derivatives_st[index]
-                self.hmf_ST[index] = self.collapsed_ratios[index] * biased_hmf_part
-               # print('Let\' see which part is more significant for this mass:', self.hmf_ST[index], 'or the other one', self.critical_density*cosmo.Om0 / self.bins[index] * self.derivative_ratios[index] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array[index]))))
-                self.hmf_ST[index]+= self.critical_density*cosmo.Om0 / self.bins[index] * self.derivative_ratios[index] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array[index])))
-            else:
-                self.hmf_ST[index]=0.0
+        #print("Is hmf the problem?")
+        #print("collapsedratios", self.collapsed_ratios[:10], type(self.collapsed_ratios),self.derivative_ratios[:10], type(self.derivative_ratios),self.bins[:10], type(self.bins))
+        #print("sigma_array", sigma_array[:10], type(sigma_array))
+        self.hmf_ST = self.collapsed_ratios * -(self.critical_density*cosmo.Om0)/self.bins/np.sqrt(2*np.pi) * delta * ((sigma_array)**(-1.5)) * \
+                                (np.e**(-0.5*delta**2/(sigma_array))) * self.sigma_derivatives_st + self.critical_density*cosmo.Om0 / self.bins * self.derivative_ratios[1:-1] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array)))
+        #print("I guess not!")
+        #for index,mass in enumerate(self.bins):
+        #    if mass<self.M_bias and index<len(self.derivative_ratios):
+        #        biased_hmf_part = -(self.critical_density*cosmo.Om0)/self.bins[index]/np.sqrt(2*np.pi) * delta * ((sigma_array[index])**(-1.5)) * \
+        #                        (np.e**(-0.5*delta**2/(sigma_array[index]))) * self.sigma_derivatives_st[index]
+        #        self.hmf_ST[index] = self.collapsed_ratios[index] * biased_hmf_part
+
+        #        self.hmf_ST[index]+= self.critical_density*cosmo.Om0 / self.bins[index] * self.derivative_ratios[index] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array[index])))
+        #    else:
+        #        self.hmf_ST[index]=0.0
         return self.hmf_ST
