@@ -201,7 +201,9 @@ def Sampler_ALL(emissivities_x_list,
                 setattr(class_int, 'redshift', z)
                 mhs = np.array(f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))]['Mh'])
                 N_this_iter = len(mhs)
-
+                if mhs = np.zeros((1,)):
+                    mhs = []
+                    N_this_iter = 0
             #print("Time for mass sampling", time_is_now - time_is_up)
             N_this_iter = int(N_this_iter)
         time_2 = time.time()
