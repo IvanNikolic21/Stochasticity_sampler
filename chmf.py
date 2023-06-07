@@ -173,7 +173,7 @@ class chmf:
         if ((self.M_bias-M) < self.TINY):
             #print("Mass of the halo bigger than the overdensity mass, not good, stopping now and returing 0")
             return(0)
-        delta = self.Deltac/self.dicke() - self.delta_bias
+        delta = self.Deltac/self.dicke - self.delta_bias
 
         sig_o = self.sigma_z0(self.M_bias);
         sig_one = self.sigma_z0(M);
@@ -196,8 +196,8 @@ class chmf:
     
     def run_hmf(self, delta_bias):
         self.delta_bias = delta_bias
-        delta = self.Deltac/self.dicke() - delta_bias
-        sigma_array = self.sigma_z0_array**2 - self.sigma_cell()**2
+        delta = self.Deltac/self.dicke - delta_bias
+        sigma_array = self.sigma_z0_array**2 - self.sigma_cell**2
         self.hmf = np.zeros(len(self.bins))
         if delta<0:
             print("Something went wrong, cell overdensity bigger than collapse\n")
@@ -215,7 +215,7 @@ class chmf:
         if ((self.M_bias-M) < self.TINY):
             #print("Mass of the halo bigger than the overdensity mass, not good, stopping now and returing 0")
             return(0)
-        delta = self.Deltac/self.dicke()
+        delta = self.Deltac/self.dicke
         sig_one = self.sigma_z0(M);
         sigsq = sig_one*sig_one
         return -(self.critical_density*cosmo.Om0)/M /np.sqrt(2*np.pi) \
@@ -299,10 +299,10 @@ class chmf:
     
     def f_coll_calc(self, M, remove_delta=False): #collapsed fraction of halos above mass M
         if not remove_delta:
-            delta = self.Deltac/self.dicke() - self.delta_bias
-            sigma_bias = np.sqrt(self.sigma_z0(M)**2 - self.sigma_cell()**2)
+            delta = self.Deltac/self.dicke - self.delta_bias
+            sigma_bias = np.sqrt(self.sigma_z0(M)**2 - self.sigma_cell**2)
         else:
-            delta = self.Deltac/self.dicke()
+            delta = self.Deltac/self.dicke
             sigma_bias = self.sigma_z0(M)
         q = abs(delta/np.sqrt(2)/sigma_bias)
         t = 1.0/(1.0+0.5*q)
@@ -313,8 +313,8 @@ class chmf:
         return self.f_coll_calc(10**self.log10_Mmin) * 4*np.pi/3*self.R_bias**3 * self.critical_density #* (1+self.delta_bias)
     
     def dNdM_st(self, M):
-        sigma = self.sigma_z0(M) * self.dicke()
-        dsigmadm = self.dsigmasqdm_z0(M) * self.dicke()**2/(2*sigma)
+        sigma = self.sigma_z0(M) * self.dicke
+        dsigmadm = self.dsigmasqdm_z0(M) * self.dicke**2/(2*sigma)
         self.SHETH_a = 0.73
         self.SHETH_A = 0.353
         self.SHETH_p = 0.175
@@ -322,7 +322,7 @@ class chmf:
         return -(self.critical_density*cosmo.Om0)/M * (dsigmadm/sigma) * np.sqrt(2/np.pi) * self.SHETH_A * (1+nuhat**(-2*self.SHETH_p)) * nuhat * np.exp(-nuhat**2/2)
     
     def dNbiasdM_st(self, M):
-        delta = self.Deltac/self.dicke() - self.delta_bias
+        delta = self.Deltac/self.dicke - self.delta_bias
         sig_o = self.sigma_z0(self.M_bias);
         sigma = self.sigma_z0(M)
         sigsq = sigma*sigma - sig_o*sig_o
@@ -348,8 +348,8 @@ class chmf:
     
     def run_hmf_st(self, delta_bias):
         self.delta_bias = delta_bias
-        delta = self.Deltac/self.dicke() - delta_bias
-        sigma_array = self.sigma_z0_array_st**2 - self.sigma_cell()**2
+        delta = self.Deltac/self.dicke - delta_bias
+        sigma_array = self.sigma_z0_array_st**2 - self.sigma_cell**2
         self.hmf_st = np.zeros(len(self.bins))
         self.SHETH_a = 0.73
         self.SHETH_A = 0.353
@@ -397,8 +397,8 @@ class chmf:
         else:
             sigma_currmass = np.interp(10**mass, self.bins, self.sigma_z0_array_st)
         fraction =  self.f_coll_st(10**mass) / self.f_coll_calc(10**mass)
-        s = np.sqrt(2 * (sigma_currmass**2 - self.sigma_cell()**2))
-        er_f = erfc ((self.Deltac/self.dicke() - delta_bias)/ s)
+        s = np.sqrt(2 * (sigma_currmass**2 - self.sigma_cell**2))
+        er_f = erfc ((self.Deltac/self.dicke - delta_bias)/ s)
         return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density * cosmo.Om0
     
     def prep_collapsed_fractions(self, check_cache=True):
@@ -434,8 +434,8 @@ class chmf:
 
     def ST_hmf(self, delta_inst):
         #self.hmf_ST = np.zeros((len(self.bins)))
-        delta = self.Deltac/self.dicke() - delta_inst
-        sigma_array = self.sigma_z0_array_st**2 - self.sigma_cell()**2
+        delta = self.Deltac/self.dicke - delta_inst
+        sigma_array = self.sigma_z0_array_st**2 - self.sigma_cell**2
         #print("Is hmf the problem?")
         #print("collapsedratios", self.collapsed_ratios[:10], type(self.collapsed_ratios),self.derivative_ratios[:10], type(self.derivative_ratios),self.bins[:10], type(self.bins))
         #print("sigma_array", sigma_array[:10], type(sigma_array))

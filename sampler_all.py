@@ -57,7 +57,7 @@ def Sampler_ALL(emissivities_x_list,
                 SFH_samp = None,
                 iter_num = 0,
            ):
-    print("Started sampling!")
+    #print("Started sampling!")
     time_0 = time.time()
     M_turn = 5*10**8  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
@@ -129,8 +129,9 @@ def Sampler_ALL(emissivities_x_list,
     #print("First checkpoint, before for loop", time_1 - time_0)
     list_of_outputs = []
 
-    print("Starting the iteration", flush=True)
+    #print("Starting the iteration", flush=True)
     for i in range(N_iter):
+        #assert i>0, "start iterations"
         start = time.time()
         if sample_densities and not control_run and not get_previous:
 
@@ -145,7 +146,7 @@ def Sampler_ALL(emissivities_x_list,
             setattr(class_int, 'redshift', z)
 
             masses = hmf_this.bins
-            print("This is delta inside", delta_bias)
+            #print("This is delta inside", delta_bias)
             mass_func = hmf_this.ST_hmf(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
@@ -170,12 +171,12 @@ def Sampler_ALL(emissivities_x_list,
                                                  mass_range = None,
                                                  max_iter = None,
                                                  )
-                print(mhs)
+                #print(mhs)
                 time_for_halo_sampling = time.time()
                 #    np.savetxt('/home/inikolic/projects/stochasticity/samples/halos{}.txt'.format(delta_bias), np.array(mhs))
                      #print("Here's one file for you to analyze", flush=True)
                 if np.sum(mhs) < 0.5 *  mass_coll:
-                    print("minimal temperature", Mmin_temp, "log10_Mmax", log10_Mmax,"mass_binning", mass_binning, "redshift", z)
+                    #print("minimal temperature", Mmin_temp, "log10_Mmax", log10_Mmax,"mass_binning", mass_binning, "redshift", z)
                     print( len(masses), sep=", ")
                     print( len(mass_func), sep=", ")
                     print(np.sum(mhs),mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
@@ -191,7 +192,7 @@ def Sampler_ALL(emissivities_x_list,
                 direc = '/home/inikolic/projects/stochasticity/_cache'
             )
         elif get_previous:
-            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_bigger.h5','r') as f_prev:
+            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_lowz.h5','r') as f_prev:
                 print("Is this proc number okay?", str(float(proc_number)), "for z=", str(z), "and this iter", str(float(iter_num)))
                 delta_bias = f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))].attrs['delta']
                 if delta_bias == 0.0:
@@ -201,13 +202,13 @@ def Sampler_ALL(emissivities_x_list,
                 setattr(class_int, 'redshift', z)
                 mhs = np.array(f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))]['Mh'])
                 N_this_iter = len(mhs)
-                if mhs = np.zeros((1,)):
+                if len(mhs)==1 and mhs == np.zeros((1,)):
                     mhs = []
                     N_this_iter = 0
             #print("Time for mass sampling", time_is_now - time_is_up)
             N_this_iter = int(N_this_iter)
         time_2 = time.time()
-        print("Got masses now", time_2 - time_1)
+        #print("Got masses now", time_2 - time_1)
         if not mass_binning:
             N_this_iter = N_mean
             masses_of_haloes = np.zeros(shape = N_this_iter)
@@ -242,7 +243,7 @@ def Sampler_ALL(emissivities_x_list,
         L_LyC = np.zeros(shape=len_mass)
         time_to_start_getting_quantities = time.time()
         time_3  = time.time()
-        print("before sampling masses", time_3 - time_2)
+        #print("before sampling masses", time_3 - time_2)
         #print("Starting the for loop:", time_to_start_getting_quantities - time_for_halo_sampling)        
         for j,mass in enumerate(masses_saved):
             logm = np.log10(mass)
@@ -296,7 +297,7 @@ def Sampler_ALL(emissivities_x_list,
                                             )
                     SFR_samp = 10**(a_SFR * logm + b_SFR)
             time_for_stellar_mass = time.time()
-            print("Getting stellar mass took:", time_for_stellar_mass - time_3, flush=True)
+            #print("Getting stellar mass took:", time_for_stellar_mass - time_3, flush=True)
             ######################LUMINOSITIES PART#############################
             #########################X_RAYS FIRST###############################
             if sample_met:
@@ -375,14 +376,20 @@ def Sampler_ALL(emissivities_x_list,
             else:
                 Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
                 F_LyC = bpass_read.get_LyC(Z_sample, Ms_sample, SFR_samp, z)
-
-
+            
+            #let's perturb emissivities as well
+            if sample_emiss:
+                mag_filt = 0.1
+                F_UV = 10**normal(np.log10(F_UV), mag_filt)
+                F_LW = 10**normal(np.log10(F_LW), mag_filt)
+                F_LyC = 10**normal(np.log10(F_LyC), mag_filt)
+                
             time_to_get_LW = time.time()
-            print("Other emissivities took", time_to_get_LW - time_to_get_X)
+            #print("Other emissivities took", time_to_get_LW - time_to_get_X)
             ###########GET_BETAS#######
-            beta_samples[j] = bpass_read.get_beta(Z_sample, SFR_samp, Ms_sample, z)
-            finally_beta = time.time()
-            print("And finally beta", finally_beta - time_to_get_LW)
+            #beta_samples[j] = bpass_read.get_beta(Z_sample, SFR_samp, Ms_sample, z)
+            #finally_beta = time.time()
+            #print("And finally beta", finally_beta - time_to_get_LW)
 
 
             #get number of ionizing photons (produced!)
@@ -421,18 +428,18 @@ def Sampler_ALL(emissivities_x_list,
             L_LW[j] = F_LW
             L_LyC[j] = F_LyC
 
-        M_uv = get_Muv(L_UV, solar_mult=True)
-        UV_lf, _ = get_uvlf(M_uv, Rbias=R_bias)
+        #M_uv = get_Muv(L_UV, solar_mult=True)
+        #UV_lf, _ = get_uvlf(M_uv, Rbias=R_bias)
         setattr(class_int, 'stellar_masses', Mstar_samples)
         setattr(class_int, 'SFR', SFR_samples)
         setattr(class_int, 'metallicity', metalicity_samples)
-        setattr(class_int, 'beta', beta_samples)
+        #setattr(class_int, 'beta', beta_samples)
         setattr(class_int, 'nion', n_ion_samples)
         setattr(class_int, 'L_x', L_X)
         setattr(class_int, 'L_lw', L_LW)
         setattr(class_int, 'L_uv', L_UV)
         setattr(class_int, 'L_lyc', L_LyC)
-        setattr(class_int, 'uv_lf', np.array(UV_lf))
+        #setattr(class_int, 'uv_lf', np.array(UV_lf))
         setattr(class_int, 'proc_number', proc_number)
         setattr(class_int, 'iter_number', iter_num * N_iter + i)
 

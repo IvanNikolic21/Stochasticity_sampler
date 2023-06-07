@@ -197,7 +197,19 @@ def saving_function(class_list):
     for file in class_list:
         delta = file.delta
         redshift = file.redshift
-        hdf[str(redshift)].create_group(str(delta))
+        print(delta)
+        try:
+            hdf[str(redshift)].create_group(str(delta))
+        except ValueError:
+            print("Something happened, here's the error. First, all of the keys")
+            #print(hdf[str(redshift)].keys())
+            print("Now what I want to add")
+            print(str(delta))
+            print("And the redshift")
+            print(str(redshift))
+            #raise ValueError
+            print("skipping for now but beware")
+            continue
         hdf[str(redshift)][str(delta)].attrs['delta'] = delta
 
         if hasattr(file, 'proc_number'):
@@ -213,13 +225,13 @@ def saving_function(class_list):
             #compression_opts=9,
         )
 
-        hdf[str(redshift)][str(delta)].create_dataset(
-            "uv_lf",
-            dtype="float",
-            data=file.uv_lf,
-            #compression='gzip',
-            #compression_opts=9,
-        )
+    #    hdf[str(redshift)][str(delta)].create_dataset(
+    #        "uv_lf",
+    #        dtype="float",
+    #        data=file.uv_lf,
+    #        #compression='gzip',
+    #        #compression_opts=9,
+    #    )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "nion",
@@ -229,13 +241,13 @@ def saving_function(class_list):
             #compression_opts=9,
         )
 
-        hdf[str(redshift)][str(delta)].create_dataset(
-            "beta",
-            dtype="float",
-            data=file.beta,
-            #compression='gzip',
-            #compression_opts=9,
-        )
+    #    hdf[str(redshift)][str(delta)].create_dataset(
+    #        "beta",
+    #        dtype="float",
+    #        data=file.beta,
+    #        #compression='gzip',
+    #        #compression_opts=9,
+    #    )
 
         hdf[str(redshift)][str(delta)].create_dataset(
             "L_LyC",

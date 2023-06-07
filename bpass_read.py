@@ -151,7 +151,7 @@ class bpass_loader:
 
         UV_p = np.sum(self.SEDS[i-1,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
         UV_n = np.sum(self.SEDS[i,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
-        print("Summed UV")
+        #print("Summed UV")
         #for i in range(self.ages-1):
         #    UV_p[i] = np.sum(np.array(SEDp[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * ang_to_hz
         #    UV_n[i] = np.sum(np.array(SEDn[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * ang_to_hz

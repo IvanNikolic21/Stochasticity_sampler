@@ -163,10 +163,10 @@ def _sample_densities(z, N, Mmin, Mmax, dlog10m, R_bias):
     sigma_list_0 = mci.sigma_z0_array
 
     #linearly interpolated densities at z=0
-    d_l_0 = d_l_z / mci.dicke()
+    d_l_0 = d_l_z / mci.dicke
 
     #interpolated sigmas for given Lagrangian densities, at z=z
-    sigma_b_z = np.interp(R_l, R_list, sigma_list_0 * mci.dicke())
+    sigma_b_z = np.interp(R_l, R_list, sigma_list_0 * mci.dicke)
 
     delta_crit = 1.68647
     def B(delta, z):
@@ -187,7 +187,7 @@ def _sample_densities(z, N, Mmin, Mmax, dlog10m, R_bias):
     gauss_cumul = integrate.cumtrapz(gauss, d_l_z)
     deltas_samp = np.interp(random, gauss_cumul / gauss_cumul[-1], d_l_z[1:])
 
-    return deltas_samp / mci.dicke()
+    return deltas_samp / mci.dicke
 
 def _sample_halos_old(Mmin, Mmax, nbins, mx, mf, mass_coll,Vb, sample_hmf = True):
     """
