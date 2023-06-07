@@ -354,7 +354,7 @@ def Sampler_ALL(emissivities_x_list,
             #assert a_Lx=='something stupid', "Something stupid happened"
             if not sample_Ms:
                 
-                Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
+                Z_sample, _ = Zahid_metal(Ms_sample, z)
                 F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z, SFH_samp = SFH_samp)
            #     F_UV = SFR_samp / 1.15 * 1e28
                 
@@ -367,14 +367,14 @@ def Sampler_ALL(emissivities_x_list,
                 F_LW = bpass_read.get_LW(Z_sample, Ms_sample, SFR_samp, z)
             
             else:
-                Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
+                Z_sample, _ = Zahid_metal(Ms_sample, SFR_samp)
                 F_LW = bpass_read.get_LW(Z_sample, Ms_sample, SFR_samp, z)
 ###LyC
             if sample_Ms:
                 F_LyC = bpass_read.get_LyC(Z_sample, Ms_sample, SFR_samp, z)
 
             else:
-                Z_sample, _ = metalicity_from_FMR(Ms_sample, SFR_samp)
+                Z_sample, _ = Zahid_metal(Ms_sample, SFR_samp)
                 F_LyC = bpass_read.get_LyC(Z_sample, Ms_sample, SFR_samp, z)
             
             #let's perturb emissivities as well
@@ -393,8 +393,9 @@ def Sampler_ALL(emissivities_x_list,
 
 
             #get number of ionizing photons (produced!)
-            n_ion_samples[j] = bpass_read.get_nion(Z_sample, SFR_samp, Ms_sample, z)
-
+            n_ion_samples_temp = bpass_read.get_nion(Z_sample, SFR_samp, Ms_sample, z)
+            if sample_emiss:
+                n_ion_samples[j] = 10**normal(np.log10(n_ion_samples_temp), mag_flit)
 
             Mstar_samples[j] = Ms_sample
             SFR_samples[j] = SFR_samp
