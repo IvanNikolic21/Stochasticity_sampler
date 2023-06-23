@@ -50,6 +50,7 @@ if __name__=='__main__':
     parser.add_argument("--no_emiss_sampling", action=argparse.BooleanOptionalAction)
     parser.add_argument("--no_Poiss_sampling",  action=argparse.BooleanOptionalAction)
     parser.add_argument("--no_met_sampling",  action=argparse.BooleanOptionalAction)
+    parser.add_argument("--no_Mstar_sampling", action=argparse.BooleanOptionalAction)
 
     parser.add_argument("--R_bias", type=float, default=5.0)
     parser.add_argument("--f_esc_option", type=str, default='binary')
@@ -64,6 +65,11 @@ if __name__=='__main__':
         sample_SFR = False
     else: 
         sample_SFR = True
+
+    if inputs.no_Mstar_sampling:
+        sample_Mstar = False
+    else:
+        sample_Mstar = True
 
     if inputs.no_emiss_sampling:
         sample_emiss = False
@@ -108,6 +114,11 @@ if __name__=='__main__':
     else:
         filename = filename + '_sfrFALSE'
 
+    if sample_Mstar:
+        filename = filename + '_MstarTRUE'
+    else:
+        filename = filename + '_MstarFALSE'
+
     if sample_emiss:
         filename = filename + '_emissTRUE_'
     else:
@@ -127,6 +138,7 @@ if __name__=='__main__':
     f = h5py.File(filename,'a')
     f.attrs["Rbias"] = inputs.R_bias
     f.attrs["sample_SFR"] = sample_SFR
+    f.attrs["sample_Mstar"] = sample_Mstar
     f.attrs["sample_emiss"] = sample_emiss
     f.attrs["sample_Poiss"] = sample_Poiss
     f.close()
@@ -278,6 +290,7 @@ if __name__=='__main__':
                                                        'sample_SFR': sample_SFR,
                                                        'sample_emiss': sample_emiss,
                                                        'sample_met' : sample_met,
+                                                       'sample_Mstar': sample_Mstar,
                                                        'bpass_read': bpass_read,
                                                        'filename': filename,
                                                        'control_run': inputs.control_run,

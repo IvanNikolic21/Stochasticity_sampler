@@ -5,6 +5,7 @@ from sfr import SFRvsMh_lin
 from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant, sigma_SFR_constant
 from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
 from scaling import sigma_Lx_const, ms_mh_21cmmc, Brorby_lx, Zahid_metal
+from scaling import sigma_SFR_variable, DeltaZ_z
 from chmf import chmf
 from helpers import RtoM, nonlin
 from common_stuff import _sample_halos, _sample_densities, SFH_sampler
@@ -44,7 +45,7 @@ def Sampler_ALL(emissivities_x_list,
                 sample_met = True,
                 calculate_2pcc = False,     #2pcc correction to # of halos.
                 duty_cycle = True,          #whether to turn of duty cycle.
-                sample_Ms = True,        #also sampling metlaicity with this
+                sample_Mstar = True,
                 mass_binning = False,     #bin halo mass fucntion
                 f_esc_option = 'binary', #f_esc distribution option
                 bpass_read = None,
@@ -248,10 +249,9 @@ def Sampler_ALL(emissivities_x_list,
         for j,mass in enumerate(masses_saved):
             logm = np.log10(mass)
                 
-            if sample_Ms:
+            if sample_Mstar:
                 if sample_SFR:
 
-                    sSFR = sigma_SFR_constant()
                     sMs = sigma_SHMR_constant()
                     time_inside_loop = time.time()
                     if sample_emiss:
@@ -269,7 +269,7 @@ def Sampler_ALL(emissivities_x_list,
                     #b_SFR -= np.log(10) * sSFR**2 / 2
                     Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms), sMs))
                     logmstar = np.log10(Ms_sample)
-
+                    sSFR = sigma_SFR_variable(Ms_sample)
                     SFR_samp = 10**(normal((a_SFR * logmstar + b_SFR), sSFR))
                 #print("Currently halo mass", logm, "stellar mass", logmstar, "SFR now", np.log10(SFR_samp))
                 else:
@@ -282,19 +282,21 @@ def Sampler_ALL(emissivities_x_list,
                     SFR_samp = 10**(a_SFR * logmstar + b_SFR)
             else:
                 if sample_SFR:
-                    a_SFR, b_SFR = sfr_ms_mh_21cmmc(
-                                                z,
-                                                get_stellar_mass = False,
-                                            )
-           	
-                    sSFR = sigma_SFR_constant() #might not be accurate here
+                    #a_SFR, b_SFR = sfr_ms_mh_21cmmc(
+                    #                            z,
+                    #                            get_stellar_mass = False,
+                    #                        )
+           	        Ms_sample = 10**(a_Ms * logm + b_Ms)
+                    sSFR = sigma_SFR_variable(Ms_sample) #might not be accurate here
+                    logmstar = np.log10(Ms_sample)
                     #b_SFR -= np.log(10) * sSFR**2 / 2
-                    SFR_samp = 10**(normal((a_SFR*logm + b_SFR), sSFR))
+                    SFR_samp = 10**(normal((a_SFR*logmstar + b_SFR), sSFR))
                 else:
-                    a_SFR, b_SFR = sfr_ms_mh_21cmmc(
-                                                z,
-                                                get_stellar_mass = False,
-                                            )
+                    #a_SFR, b_SFR = sfr_ms_mh_21cmmc(
+                    #                            z,
+                    #                            get_stellar_mass = False,
+                    #                        )
+                    Ms_sample = 10 ** (a_Ms * logm + b_Ms)
                     SFR_samp = 10**(a_SFR * logm + b_SFR)
             time_for_stellar_mass = time.time()
             #print("Getting stellar mass took:", time_for_stellar_mass - time_3, flush=True)
@@ -302,7 +304,8 @@ def Sampler_ALL(emissivities_x_list,
             #########################X_RAYS FIRST###############################
             if sample_met:
                 if sample_emiss :
-                    Z_mean = Zahid_metal(Ms_sample, z)
+                    Z_mean = metalicity_from_FMR(Ms_sample, SFR_samp)
+                    Z_mean += DeltaZ_z(z)
                     sigma_Z = sigma_metalicity_const()
                 #Z_mean -= np.log(10) * sigma_Z ** 2 / 2   #I don't think metalicity should be lognormal
 
@@ -310,8 +313,8 @@ def Sampler_ALL(emissivities_x_list,
                     Z_sample = normal(Z_mean, sigma_Z)
                     logsfr = np.log10(SFR_samp)
 
-                    a_Lx, b_Lx = Brorby_lx(Z_sample)
                     #a_Lx, b_Lx = Brorby_lx(Z_sample)
+                    a_Lx, b_Lx = Lx_SFR(Z_sample)
                     sigma_Lx = sigma_Lx_const()
                     #b_Lx -= np.log(10) * sigma_Lx**2 / 2   #shift to median
  
@@ -319,22 +322,24 @@ def Sampler_ALL(emissivities_x_list,
                     #print("Currently SFR and stellar mass", logsfr, logmstar, "Metalicity is this", Z_sample, "and finally Lx", np.log10(Lx_sample))
                 else:
                     logsfr = np.log10(SFR_samp)
-                    Z_mean = Zahid_metal(Ms_sample, z)
+                    Z_mean = metalicity_from_FMR(Ms_sample, SFR_samp)
+                    Z_mean += DeltaZ_z(z)
                     sigma_Z = sigma_metalicity_const()
                     #Z_mean -= np.log(10) * sigma_Z**2 / 2
 
                     Z_sample = normal(Z_mean, sigma_Z)
 
-                    a_Lx, b_Lx = Brorby_lx(Z_sample)
+                    a_Lx, b_Lx = Lx_SFR(Z_sample)
                     Lx_sample = 10**(a_Lx*logsfr+b_Lx)
             else:
                 if sample_emiss:
                     #a_Ms, b_Ms = ms_mh_21cmmc()
                     #Ms_sample = 10**(a_Ms * logm + b_Ms)
                     logsfr = np.log10(SFR_samp)
-                    Z_mean = Zahid_metal(Ms_sample, z)
+                    Z_mean = metalicity_from_FMR(Ms_sample, SFR_samp)
+                    Z_mean += DeltaZ_z(z)
                     Z_sample = Z_mean
-                    a_Lx, b_Lx = Brorby_lx(Z_mean)
+                    a_Lx, b_Lx = Lx_SFR(Z_mean)
                     sigma_Lx = sigma_Lx_const()
                     #b_Lx -= np.log(10) * sigma_Lx**2 / 2
                     Lx_sample = 10**normal(a_Lx * logsfr + b_Lx,sigma_Lx)
@@ -343,18 +348,20 @@ def Sampler_ALL(emissivities_x_list,
                     #a_Ms, b_Ms = ms_mh_21cmmc()
                     #Ms_sample = 10**(a_Ms * logm + b_Ms)
                     logsfr = np.log10(SFR_samp)
-                    Z_mean = Zahid_metal(Ms_sample, z)
+                    Z_mean = metalicity_from_FMR(Ms_sample, SFR_samp)
+                    Z_mean += DeltaZ_z(z)
                     Z_sample = Z_mean
-                    a_Lx, b_Lx = Brorby_lx(Z_mean)
+                    a_Lx, b_Lx = Lx_SFR(Z_mean)
                     Lx_sample = 10**(a_Lx * logsfr + b_Lx)
             time_to_get_X = time.time()
             #print("Time it took to get X-rays", time_to_get_X - time_for_stellar_mass, flush=True)
             #######################END OF LX PART###############################
             ######################START OF UV PART##############################
             #assert a_Lx=='something stupid', "Something stupid happened"
-            if not sample_Ms:
+            if not sample_met:
                 
-                Z_sample, _ = Zahid_metal(Ms_sample, z)
+                Z_sample = metalicity_from_FMR(Ms_sample, SFR_samp)
+                Z_sample += DeltaZ_z(z)
                 F_UV = bpass_read.get_UV(Z_sample, Ms_sample, SFR_samp,z, SFH_samp = SFH_samp)
            #     F_UV = SFR_samp / 1.15 * 1e28
                 
@@ -363,18 +370,21 @@ def Sampler_ALL(emissivities_x_list,
             #    F_UV = SFR_samp / 1.15 * 1e28 
             #######################END OF UV PART###############################
             #####################START OF LW PART###############################
-            if sample_Ms:
+            if sample_met:
                 F_LW = bpass_read.get_LW(Z_sample, Ms_sample, SFR_samp, z)
             
             else:
-                Z_sample, _ = Zahid_metal(Ms_sample, SFR_samp)
+                Z_sample  = metalicity_from_FMR(Ms_sample, SFR_samp)
+                Z_sample += DeltaZ_z(z)
+
                 F_LW = bpass_read.get_LW(Z_sample, Ms_sample, SFR_samp, z)
 ###LyC
-            if sample_Ms:
+            if sample_met:
                 F_LyC = bpass_read.get_LyC(Z_sample, Ms_sample, SFR_samp, z)
 
             else:
-                Z_sample, _ = Zahid_metal(Ms_sample, SFR_samp)
+                Z_sample = metalicity_from_FMR(Ms_sample, SFR_samp)
+                Z_sample += DeltaZ_z(z)
                 F_LyC = bpass_read.get_LyC(Z_sample, Ms_sample, SFR_samp, z)
             
             #let's perturb emissivities as well
@@ -413,8 +423,11 @@ def Sampler_ALL(emissivities_x_list,
             #######################STAR OF F_ESC FOR UV#########################
 
             if f_esc_option == 'binary':
-                f_esc = fesc_distr()
-                F_LyC *= f_esc
+                if sample_emiss:
+                    f_esc = fesc_distr()
+                    F_LyC *= f_esc
+                else:
+                    F_LyC *= 0.053 #constant value
             elif f_esc_option == 'ksz_inference':
                 f_esc, scat = fesc_distr(f_esc_option,mass)
                 if sample_emiss:

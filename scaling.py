@@ -53,7 +53,8 @@ def sigma_SHMR_constant():
         sigma: float,
             constant scatter for the shmr relation.
     """
-    return 0.6 / np.log(10)
+    return 0.25 #new FirstLight update
+    #return 0.6 / np.log(10)
 
 def sigma_SFR_constant():
     """
@@ -61,6 +62,22 @@ def sigma_SFR_constant():
     """
     return 0.5 / np.log(10)
 
+def sigma_SFR_variable(Mstar):
+    """
+        Variable scatter of SFR-Mstar relation.
+        It's based on FirstLight database.
+    Parameters
+    ----------
+    Mstar: stellar mass at which the relation is taken
+
+    Returns
+    -------
+    sigma: sigma of the relation
+    """
+    a_sig_SFR = -0.11654893
+    b_sig_SFR = 1.35289501
+    sigma = a_sig_SFR * np.log10(Mstar) + b_sig_SFR
+    return sigma
 def Brorby_lx(Z=None):
     """
         Get scaling law for Lx - SFR relation from Brorby+16.
@@ -169,11 +186,26 @@ def sigma_metalicity_const():
     sigma: float,
         returns the scatter of the relation.
     """
-    return 0.054
+    #return 0.054
+    return 0.1 #motivated by the fact that galaxies show a larger scatter at higher redshifts
 
 def OH_to_mass_fraction(Z_OH):
     """
     Convert 12+log(O/H) metalicty to mass fraction one.
     """
     return 10**(Z_OH - 8.69)
-    
+
+def DeltaZ_z(z):
+    """
+        Evolution of the normalization of FMR. Based on Curti+23.
+    Parameters
+    ----------
+    z: redshift
+
+    Returns
+    -------
+    Delta Z: offset from FMR
+    """
+    a_d = -0.0553952
+    b_d = 0.0635493
+    return a_d * z + b_d
