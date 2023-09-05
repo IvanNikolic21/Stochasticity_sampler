@@ -193,7 +193,7 @@ def Sampler_ALL(emissivities_x_list,
                 direc = '/home/inikolic/projects/stochasticity/_cache'
             )
         elif get_previous:
-            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_lowz.h5','r') as f_prev:
+            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_bigz.h5','r') as f_prev:
                 print("Is this proc number okay?", str(float(proc_number)), "for z=", str(z), "and this iter", str(float(iter_num)))
                 delta_bias = f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))].attrs['delta']
                 if delta_bias == 0.0:
@@ -286,7 +286,7 @@ def Sampler_ALL(emissivities_x_list,
                     #                            z,
                     #                            get_stellar_mass = False,
                     #                        )
-           	        Ms_sample = 10**(a_Ms * logm + b_Ms)
+                    Ms_sample = 10**(a_Ms * logm + b_Ms)
                     sSFR = sigma_SFR_variable(Ms_sample) #might not be accurate here
                     logmstar = np.log10(Ms_sample)
                     #b_SFR -= np.log(10) * sSFR**2 / 2
@@ -405,7 +405,7 @@ def Sampler_ALL(emissivities_x_list,
             #get number of ionizing photons (produced!)
             n_ion_samples_temp = bpass_read.get_nion(Z_sample, SFR_samp, Ms_sample, z)
             if sample_emiss:
-                n_ion_samples[j] = 10**normal(np.log10(n_ion_samples_temp), mag_flit)
+                n_ion_samples[j] = 10**normal(np.log10(n_ion_samples_temp), mag_filt)
 
             Mstar_samples[j] = Ms_sample
             SFR_samples[j] = SFR_samp
