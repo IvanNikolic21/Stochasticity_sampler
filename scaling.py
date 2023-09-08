@@ -77,7 +77,11 @@ def sigma_SFR_variable(Mstar):
     a_sig_SFR = -0.11654893
     b_sig_SFR = 1.35289501
     sigma = a_sig_SFR * np.log10(Mstar) + b_sig_SFR
-    return sigma
+
+    if Mstar > 10**10:
+        return 0.18740570999999995
+    else:
+        return sigma
 def Brorby_lx(Z=None):
     """
         Get scaling law for Lx - SFR relation from Brorby+16.
