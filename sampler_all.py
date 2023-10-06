@@ -57,6 +57,7 @@ def Sampler_ALL(emissivities_x_list,
                 hmf_this = None,
                 SFH_samp = None,
                 iter_num = 0,
+                shift_scaling = False,
            ):
     #print("Started sampling!")
     time_0 = time.time()
@@ -267,16 +268,28 @@ def Sampler_ALL(emissivities_x_list,
                 #else:
                     #b_Ms -= np.log(10) * sMs**2 / 2
                     #b_SFR -= np.log(10) * sSFR**2 / 2
-                    Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms), sMs))
+                    if shift_scaling:
+                        fct = np.log(10) * 0.5 * sMs**2
+                    else:
+                        fct = 0.0
+                    Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms - fct), sMs))
                     logmstar = np.log10(Ms_sample)
                     sSFR = sigma_SFR_variable(Ms_sample)
-                    SFR_samp = 10**(normal((a_SFR * logmstar + b_SFR), sSFR))
+                    if shift_scaling:
+                        fct = np.log(10) * 0.5 * sSFR**2
+                    else:
+                        fct = 0.0
+                    SFR_samp = 10**(normal((a_SFR * logmstar + b_SFR-fct), sSFR))
                 #print("Currently halo mass", logm, "stellar mass", logmstar, "SFR now", np.log10(SFR_samp))
                 else:
 
                     sMs = sigma_SHMR_constant()
+                    if shift_scaling:
+                        fct = np.log(10) * 0.5 * sMs**2
+                    else:
+                        fct = 0.0
                     #b_Ms -= np.log(10) * sMs ** 2 / 2
-                    Ms_sample = 10**(normal((a_Ms*logm + b_Ms), sMs))
+                    Ms_sample = 10**(normal((a_Ms*logm + b_Ms - fct), sMs))
                     logmstar = np.log10(Ms_sample)
                     
                     SFR_samp = 10**(a_SFR * logmstar + b_SFR)
@@ -288,9 +301,13 @@ def Sampler_ALL(emissivities_x_list,
                     #                        )
                     Ms_sample = 10**(a_Ms * logm + b_Ms)
                     sSFR = sigma_SFR_variable(Ms_sample) #might not be accurate here
+                    if shift_scaling:
+                        fct = np.log(10) * 0.5 * sSFR**2
+                    else:
+                        fct = 0.0
                     logmstar = np.log10(Ms_sample)
                     #b_SFR -= np.log(10) * sSFR**2 / 2
-                    SFR_samp = 10**(normal((a_SFR*logmstar + b_SFR), sSFR))
+                    SFR_samp = 10**(normal((a_SFR*logmstar + b_SFR-fct), sSFR))
                 else:
                     #a_SFR, b_SFR = sfr_ms_mh_21cmmc(
                     #                            z,
@@ -317,8 +334,11 @@ def Sampler_ALL(emissivities_x_list,
                     a_Lx, b_Lx = Lx_SFR(Z_sample)
                     sigma_Lx = sigma_Lx_const()
                     #b_Lx -= np.log(10) * sigma_Lx**2 / 2   #shift to median
- 
-                    Lx_sample = 10**normal(a_Lx * logsfr + b_Lx,sigma_Lx)
+                    if shift_scaling:
+                        fct = np.log(10) * 0.5 * sigma_Lx**2
+                    else:
+                        fct = 0.0
+                    Lx_sample = 10**normal(a_Lx * logsfr + b_Lx-fct,sigma_Lx)
                     #print("Currently SFR and stellar mass", logsfr, logmstar, "Metalicity is this", Z_sample, "and finally Lx", np.log10(Lx_sample))
                 else:
                     logsfr = np.log10(SFR_samp)
@@ -342,7 +362,11 @@ def Sampler_ALL(emissivities_x_list,
                     a_Lx, b_Lx = Lx_SFR(Z_mean)
                     sigma_Lx = sigma_Lx_const()
                     #b_Lx -= np.log(10) * sigma_Lx**2 / 2
-                    Lx_sample = 10**normal(a_Lx * logsfr + b_Lx,sigma_Lx)
+                    if shift_scaling:
+                        fct = np.log(10) * 0.5 * sigma_Lx**2
+                    else:
+                        fct = 0.0
+                    Lx_sample = 10**normal(a_Lx * logsfr + b_Lx-fct,sigma_Lx)
                 
                 else:
                     #a_Ms, b_Ms = ms_mh_21cmmc()
@@ -390,9 +414,13 @@ def Sampler_ALL(emissivities_x_list,
             #let's perturb emissivities as well
             if sample_emiss:
                 mag_filt = 0.1
-                F_UV = 10**normal(np.log10(F_UV), mag_filt)
-                F_LW = 10**normal(np.log10(F_LW), mag_filt)
-                F_LyC = 10**normal(np.log10(F_LyC), mag_filt)
+                if shift_scaling:
+                    fct = np.log(10) * 0.5 * mag_filt**2
+                else:
+                    fct = 0.0
+                F_UV = 10**normal(np.log10(F_UV)-fct, mag_filt)
+                F_LW = 10**normal(np.log10(F_LW)-fct, mag_filt)
+                F_LyC = 10**normal(np.log10(F_LyC)-fct, mag_filt)
                 
             time_to_get_LW = time.time()
             #print("Other emissivities took", time_to_get_LW - time_to_get_X)

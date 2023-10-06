@@ -422,6 +422,7 @@ def _sample_halos(
                     N_actual[k] = round(N_mean_list[k])
                 #print(N_actual)
                 rn_now = np.random.uniform(size = int(N_actual[k]))
+                print(rn_now, np.flip(N_cs), np.flip(mx[inds]))
                 #for index, rn in enumerate(rn_now):
                 #    m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
                 m_haloes.append(np.interp(rn_now, np.flip(N_cs), np.flip(mx[inds])))

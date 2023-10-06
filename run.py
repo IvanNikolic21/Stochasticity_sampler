@@ -58,6 +58,8 @@ if __name__=='__main__':
     parser.add_argument("--control_run", action=argparse.BooleanOptionalAction)
     parser.add_argument("--use_previous_run", action=argparse.BooleanOptionalAction)
 
+    parser.add_argument("--shift_scaling", action=argparse.BooleanOptionalAction)
+
     inputs = parser.parse_args()
     assert inputs.control_run!= True or inputs.use_previous_run!=True, "Not compatible combination"
 
@@ -85,6 +87,11 @@ if __name__=='__main__':
         sample_met = False
     else:
         sample_met = True
+
+    if inputs.shift_scaling:
+        shift_scaling = True
+    else:
+        shift_scaling = False
     
     assert type(sample_SFR) == bool, "Something went wrong, type is not boolean"
 
@@ -301,6 +308,7 @@ if __name__=='__main__':
                                                        'hmf_this' : hmf_this,
                                                        'SFH_samp' : SFH_samp,
                                                        'iter_num' : iter_num,
+                                                       'shift_scaling' : shift_scaling,
                                          })
                                  #        callback=saving_function,
                         #                 error_callback = error_function,
