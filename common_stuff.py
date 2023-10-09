@@ -15,6 +15,13 @@ from chmf import chmf as my_chmf
 from scipy.interpolate import InterpolatedUnivariateSpline as _spline
 import scipy.integrate as intg
 
+
+class NaNException(Exception):
+    """Integrator hit a NaN."""
+
+    pass
+
+
 def hmf_integral_gtm(M, dndm, mass_density=False):
     """
     Cumulatively integrate dn/dm.
@@ -420,12 +427,16 @@ def _sample_halos(
                     N_actual[k] = np.random.poisson(N_mean_list[k])
                 else:
                     N_actual[k] = round(N_mean_list[k])
-                #print(N_actual)
                 rn_now = np.random.uniform(size = int(N_actual[k]))
-                print(rn_now, np.flip(N_cs), np.flip(mx[inds]))
                 #for index, rn in enumerate(rn_now):
                 #    m_haloes.append(np.interp(rn, np.flip(N_cs), np.flip(mx[inds])))
-                m_haloes.append(np.interp(rn_now, np.flip(N_cs), np.flip(mx[inds])))
+                try:
+                    m_haloes.append(np.interp(rn_now, np.flip(N_cs), np.flip(mx[inds])))
+                except ValueError:
+                    print("Some problem for bin:", k, mbin[k])
+                    print("This is mx[inds]", mx[inds])
+                    print("And mass function", mf[inds])
+                    raise ValueError
     else:
         inds = [b for b, m in enumerate(mx) if
                 m > 10 ** Mmin and m < 10 ** Mmax]

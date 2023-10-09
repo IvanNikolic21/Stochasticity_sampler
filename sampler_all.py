@@ -113,7 +113,7 @@ def Sampler_ALL(emissivities_x_list,
             masses, mass_func = hmf_this.run_hmf(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
-                if mass_func_element==0:
+                if mass_func_element==0 or np.isnan(mass_func_element):
                     break
             masses=masses[:index_to_stop]
             mass_func=mass_func[:index_to_stop]
