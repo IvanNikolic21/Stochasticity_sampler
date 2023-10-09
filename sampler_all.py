@@ -5,7 +5,7 @@ from sfr import SFRvsMh_lin
 from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant, sigma_SFR_constant
 from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
 from scaling import sigma_Lx_const, ms_mh_21cmmc, Brorby_lx, Zahid_metal
-from scaling import sigma_SFR_variable, DeltaZ_z
+from scaling import sigma_SFR_variable, DeltaZ_z, sigma_SFR_Hassan
 from chmf import chmf
 from helpers import RtoM, nonlin
 from common_stuff import _sample_halos, _sample_densities, SFH_sampler
@@ -58,9 +58,8 @@ def Sampler_ALL(emissivities_x_list,
                 SFH_samp = None,
                 iter_num = 0,
                 shift_scaling = False,
+                literature_run = None,
            ):
-    #print("Started sampling!")
-    time_0 = time.time()
     M_turn = 5*10**8  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
     #SFH_samp = SFH_sampler(z)
@@ -70,6 +69,11 @@ def Sampler_ALL(emissivities_x_list,
         z,
         True,
     )
+
+    if literature_run == 'Hassan21' and sample_Mstar:
+        raise ValueError("Hassan21 requires only SFR sampling. "
+                         "Check your setup")
+
     # #initialize h5 file
     # container = HdF5Saver(
     #     z,
@@ -274,7 +278,10 @@ def Sampler_ALL(emissivities_x_list,
                         fct = 0.0
                     Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms - fct), sMs))
                     logmstar = np.log10(Ms_sample)
-                    sSFR = sigma_SFR_variable(Ms_sample)
+                    if literature_run=='Hassan21':
+                        sSFR = sigma_SFR_Hassan()
+                    else:
+                        sSFR = sigma_SFR_variable(Ms_sample)
                     if shift_scaling:
                         fct = np.log(10) * 0.5 * sSFR**2
                     else:
@@ -300,7 +307,10 @@ def Sampler_ALL(emissivities_x_list,
                     #                            get_stellar_mass = False,
                     #                        )
                     Ms_sample = 10**(a_Ms * logm + b_Ms)
-                    sSFR = sigma_SFR_variable(Ms_sample) #might not be accurate here
+                    if literature_run=='Hassan21':
+                        sSFR = sigma_SFR_Hassan()
+                    else:
+                        sSFR = sigma_SFR_variable(Ms_sample) #might not be accurate here
                     if shift_scaling:
                         fct = np.log(10) * 0.5 * sSFR**2
                     else:
