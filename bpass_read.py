@@ -154,7 +154,7 @@ class bpass_loader:
         UVs_all = np.sum(self.SEDS[0:10,:, 1449:1549], axis=2)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
         FUVs = np.sum(UVs_all, axis=1)
         s = splrep(self.metal_avail[:10], FUVs, k=5, s=5)
-        UV_final = BSpline(*s)(metal)
+        UV_final = float(BSpline(*s)(metal))
 
         #UV_p = np.sum(self.SEDS[i-1,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
         #UV_n = np.sum(self.SEDS[i,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
@@ -240,7 +240,7 @@ class bpass_loader:
 
         LyC_s = np.sum(LyC_all,axis=1)
         s = splrep(self.metal_avail[:10], LyC_s, k=5, s=5)
-        LyC_final = BSpline(*s)(metal)
+        LyC_final = float(BSpline(*s)(metal))
 
         #for i in range(self.ages-1):
         #    LyC_p[i] = np.array(SEDp[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * ang_to_hz
@@ -324,7 +324,7 @@ class bpass_loader:
         LWs_all = np.sum(self.SEDS[0:10,:, 911:1107], axis=2)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
         LW_s = np.sum(LWs_all, axis=1)
         s = splrep(self.metal_avail[:10], LW_s, k=5, s=5)
-        LW_final = BSpline(*s)(metal)
+        LW_final = float(BSpline(*s)(metal))
 
         #for i in range(self.ages-1):
         #    LW_p[i] = simps(np.array(SEDp[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
@@ -389,7 +389,7 @@ class bpass_loader:
         nion_all = np.sum(self.SEDS[0:10,:, :912]/(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=2) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
         nion_s = np.sum(nion_all, axis=1)
         s = splrep(self.metal_avail[:10], nion_s, k=5, s=5)
-        nion_final = BSpline(*s)(metal)
+        nion_final = float(BSpline(*s)(metal))
 
         #nion_p = np.sum(self.SEDS[i-1,:, :912] /(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
         #nion_n = np.sum(self.SEDS[i,:, :912] / (6.626 * 1e-27 * wv_to_freq(wv_nion)), axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
