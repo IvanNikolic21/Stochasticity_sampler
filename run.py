@@ -17,22 +17,17 @@ R_bias -> default
 log10_Mmin -> default
 mass_binning -> default
 """
-import psutil
 import argparse
-from sampler_x import Sampler_x
-from sampler_uv import Sampler_UV
-from sampler_lw import Sampler_LW
 from sampler_all import Sampler_ALL
 from bpass_read import bpass_loader
 from common_stuff import SFH_sampler, _sample_densities
 from chmf import chmf
 import os
 import time
-import sys
 import numpy as np
 import h5py
-from multiprocessing import Pool, cpu_count, Process, Manager
-from save import saving_function, error_function
+from multiprocessing import Pool, Manager
+from save import saving_function
 import datetime
 
 if __name__=='__main__':
@@ -303,15 +298,15 @@ if __name__=='__main__':
                                                        'bpass_read': bpass_read,
                                                        'filename': filename,
                                                        'control_run': inputs.control_run,
-                                                       'f_esc_option' : inputs.f_esc_option,
-                                                       'proc_number' : i,
-                                                       'get_previous' : inputs.use_previous_run,
-                                                       'density_inst' : delta_list[(iter_num * iter_per_par) : ((iter_num+1) * iter_per_par), i],
-                                                       'hmf_this' : hmf_this,
-                                                       'SFH_samp' : SFH_samp,
-                                                       'iter_num' : iter_num,
-                                                       'shift_scaling' : shift_scaling,
-                                                       'litarature_run' : inputs.literature_run,
+                                                       'f_esc_option': inputs.f_esc_option,
+                                                       'proc_number': i,
+                                                       'get_previous': inputs.use_previous_run,
+                                                       'density_inst': delta_list[(iter_num * iter_per_par) : ((iter_num+1) * iter_per_par), i],
+                                                       'hmf_this': hmf_this,
+                                                       'SFH_samp': SFH_samp,
+                                                       'iter_num': iter_num,
+                                                       'shift_scaling': shift_scaling,
+                                                       'literature_run': inputs.literature_run,
                                          })
                                  #        callback=saving_function,
                         #                 error_callback = error_function,
