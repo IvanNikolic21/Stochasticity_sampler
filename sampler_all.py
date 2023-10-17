@@ -1,21 +1,17 @@
 """"Contains sampler of all three things at the same time"""
 import os
 from hmf import integrate_hmf as ig_hmf
-from sfr import SFRvsMh_lin
-from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant, sigma_SFR_constant
+from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant
 from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
-from scaling import sigma_Lx_const, ms_mh_21cmmc, Brorby_lx, Zahid_metal
+from scaling import sigma_Lx_const
 from scaling import sigma_SFR_variable, DeltaZ_z, sigma_SFR_Hassan
 from chmf import chmf
-from helpers import RtoM, nonlin
-from common_stuff import _sample_halos, _sample_densities, SFH_sampler
-from common_stuff import get_Muv, get_uvlf, _get_loaded_halos
-from bpass_read import bpass_loader
+from common_stuff import _sample_halos
+from common_stuff import  _get_loaded_halos
 import numpy as np
 from fesc import fesc_distr
 from numpy.random import normal
 import time
-from save import HdF5Saver
 import h5py
 
 class Sampler_Output:
@@ -156,7 +152,7 @@ def Sampler_ALL(emissivities_x_list,
             mass_func = hmf_this.ST_hmf(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
-                if mass_func_element==0:
+                if mass_func_element == 0 or np.isnan(mass_func_element):
                     break
             masses=masses[:index_to_stop]
             mass_func=mass_func[:index_to_stop]
