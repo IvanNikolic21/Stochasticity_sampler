@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.integrate import simpson as simps
 from scipy.interpolate import splrep, BSpline
-from astropy.cosmology import Planck15 as cosmo
+from astropy.cosmology import Planck15 as Cosmo
 from astropy import units as u
 from multiprocessing import Pool
 from astropy import constants as const
@@ -12,6 +12,7 @@ from common_stuff import get_SFH_exp
 
 
 ang_to_hz = 1/const.c.cgs.value * 1500**2 * 1e-8
+
 
 def wv_to_freq(wvs):
     """
@@ -26,6 +27,7 @@ def wv_to_freq(wvs):
     """
 
     return const.c.cgs.value / (wvs * 1e-8)
+
 
 def reader(name):
     """
@@ -151,7 +153,7 @@ class bpass_loader:
 
         UVs_all = np.sum(self.SEDS[0:10,:, 1449:1549], axis=2)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
         FUVs = np.sum(UVs_all, axis=1)
-        s = splrep(metal[:10], FUVs, k=5, s=5)
+        s = splrep(self.metal_avail[:10], FUVs, k=5, s=5)
         UV_final = BSpline(*s)(metal)
 
         #UV_p = np.sum(self.SEDS[i-1,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
@@ -237,7 +239,7 @@ class bpass_loader:
         LyC_all = self.SEDS[:10,:,911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
 
         LyC_s = np.sum(LyC_all,axis=1)
-        s = splrep(metal[:10], LyC_s, k=5, s=5)
+        s = splrep(self.metal_avail[:10], LyC_s, k=5, s=5)
         LyC_final = BSpline(*s)(metal)
 
         #for i in range(self.ages-1):
@@ -321,7 +323,7 @@ class bpass_loader:
 
         LWs_all = np.sum(self.SEDS[0:10,:, 911:1107], axis=2)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
         LW_s = np.sum(LWs_all, axis=1)
-        s = splrep(metal[:10], LW_s, k=5, s=5)
+        s = splrep(self.metal_avail[:10], LW_s, k=5, s=5)
         LW_final = BSpline(*s)(metal)
 
         #for i in range(self.ages-1):
@@ -386,7 +388,7 @@ class bpass_loader:
 
         nion_all = np.sum(self.SEDS[0:10,:, :912]/(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=2) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
         nion_s = np.sum(nion_all, axis=1)
-        s = splrep(metal[:10], nion_s, k=5, s=5)
+        s = splrep(self.metal_avail[:10], nion_s, k=5, s=5)
         nion_final = BSpline(*s)(metal)
 
         #nion_p = np.sum(self.SEDS[i-1,:, :912] /(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
@@ -535,7 +537,7 @@ def loader(metal, band,SFR,z, filename = '/home/inikolic/projects/stochasticity/
     
     #need to estimate the age of galaxy 
     t_star = 0.36
-    t_age = t_star * (cosmo.H(z).to(u.yr**(-1)).value)**-1
+    t_age = t_star * (Cosmo.H(z).to(u.yr**(-1)).value)**-1
     
     for index, age in enumerate(ag):
         if age > t_age:
