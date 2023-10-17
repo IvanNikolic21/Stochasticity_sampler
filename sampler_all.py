@@ -14,15 +14,17 @@ from numpy.random import normal
 import time
 import h5py
 
+
 class Sampler_Output:
     """
-        Class that contains all of the information from the simulation. It's
+        Class that contains all the information from the simulation. It's
         directly passed to the saver algorithm and it's accessed directly
         throughout the code. It's main parameter is the overdensity.
     """
 
     def __init__(self, delta):
         self.delta = delta
+
 
 def Sampler_ALL(emissivities_x_list,
                 emissivities_lw_list,
@@ -440,6 +442,8 @@ def Sampler_ALL(emissivities_x_list,
             n_ion_samples_temp = bpass_read.get_nion(Z_sample, SFR_samp, Ms_sample, z)
             if sample_emiss:
                 n_ion_samples[j] = 10**normal(np.log10(n_ion_samples_temp), mag_filt)
+            else:
+                n_ion_samples[j] = n_ion_samples_temp
 
             Mstar_samples[j] = Ms_sample
             SFR_samples[j] = SFR_samp
