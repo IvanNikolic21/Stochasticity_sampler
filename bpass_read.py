@@ -1,14 +1,14 @@
 """Contains all necessary ingredients for manipulating bpass files"""
-from scipy.optimize import curve_fit
 import numpy as np
 from scipy.integrate import simpson as simps
+from scipy.interpolate import splrep, BSpline
 from astropy.cosmology import Planck15 as cosmo
 from astropy import units as u
 from multiprocessing import Pool
 from astropy import constants as const
 
 from scaling import OH_to_mass_fraction
-from common_stuff import get_SFH_stoch_const, get_SFH_exp, SFH_sampler
+from common_stuff import get_SFH_exp
 
 
 ang_to_hz = 1/const.c.cgs.value * 1500**2 * 1e-8
@@ -53,7 +53,7 @@ class bpass_loader:
             Which BPASS file is used.
         """
         self.metal_avail = np.array([1e-5, 1e-4, 1e-3, 0.002, 0.003, 0.004, 
-                                     0.006, 0.008, 0.01, 0.14, 0.02, 0.03, 
+                                     0.006, 0.008, 0.01, 0.014, 0.02, 0.03,
                                      0.04])
         self.metal_avail_names = ['zem5', 'zem4', 'z001', 'z002', 'z003', 
                                   'z004', 'z006', 'z008', 'z010', 'z014', 
@@ -149,8 +149,13 @@ class bpass_loader:
         #UV_p = np.zeros(self.ages-1)
         #UV_n = np.zeros(self.ages-1)
 
-        UV_p = np.sum(self.SEDS[i-1,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
-        UV_n = np.sum(self.SEDS[i,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
+        UVs_all = np.sum(self.SEDS[0:10,:, 1449:1549], axis=2)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
+        FUVs = np.sum(UVs_all, axis=1)
+        s = splrep(metal[:10], FUVs, k=5, s=5)
+        UV_final = BSpline(*s)(metal)
+
+        #UV_p = np.sum(self.SEDS[i-1,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
+        #UV_n = np.sum(self.SEDS[i,:, 1449:1549], axis=1)/100 * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
         #print("Summed UV")
         #for i in range(self.ages-1):
         #    UV_p[i] = np.sum(np.array(SEDp[i][1449:1549]))/100 * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * ang_to_hz
@@ -163,10 +168,10 @@ class bpass_loader:
         #    UV_p_to_sum = np.append(UV_p[:ages_UV], missing_piecep)
         #    UV_n_to_sum = np.append(UV_n[:ages_UV], missing_piecen)
         
-        FUV_p = np.sum(UV_p)
-        FUV_n = np.sum(UV_n)
+        #FUV_p = np.sum(UV_p)
+        #FUV_n = np.sum(UV_n)
         
-        UV_final = np.interp(metal, [met_prev, met_next], [FUV_p, FUV_n])
+        #UV_final = np.interp(metal, [met_prev, met_next], [FUV_p, FUV_n])
 
         #a_UV = (FUV_n - FUV_p) / (met_next - met_prev)
         #b_UV = (- FUV_n * met_prev + FUV_p * met_next) / (met_next - met_prev)
@@ -225,8 +230,15 @@ class bpass_loader:
         #LyC_p = np.zeros(self.ages-1)
         #LyC_n = np.zeros(self.ages-1)
 
-        LyC_p = self.SEDS[i-1,:, 911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
-        LyC_n = self.SEDS[i,:, 911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
+
+#        LyC_p = self.SEDS[i-1,:, 911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
+#        LyC_n = self.SEDS[i,:, 911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
+
+        LyC_all = self.SEDS[:10,:,911] * self.SFH * (self.ag[1:]-self.ag[:-1]) * ang_to_hz
+
+        LyC_s = np.sum(LyC_all,axis=1)
+        s = splrep(metal[:10], LyC_s, k=5, s=5)
+        LyC_final = BSpline(*s)(metal)
 
         #for i in range(self.ages-1):
         #    LyC_p[i] = np.array(SEDp[i][911]) * self.SFH[i] * (self.ag[i+1]-self.ag[i]) * ang_to_hz
@@ -239,10 +251,10 @@ class bpass_loader:
         #    UV_p_to_sum = np.append(UV_p[:ages_UV], missing_piecep)
         #    UV_n_to_sum = np.append(UV_n[:ages_UV], missing_piecen)
 
-        FLyC_p = np.sum(LyC_p)
-        FLyC_n = np.sum(LyC_n)
+#        FLyC_p = np.sum(LyC_p)
+#        FLyC_n = np.sum(LyC_n)
 
-        LyC_final = np.interp(metal, [met_prev, met_next], [FLyC_p, FLyC_n])
+#        LyC_final = np.interp(metal, [met_prev, met_next], [FLyC_p, FLyC_n])
 
         #a_UV = (FUV_n - FUV_p) / (met_next - met_prev)
         #b_UV = (- FUV_n * met_prev + FUV_p * met_next) / (met_next - met_prev)
@@ -304,17 +316,22 @@ class bpass_loader:
         #LW_p = np.zeros(self.ages-1)
         #LW_n = np.zeros(self.ages-1)
 
-        LW_p = np.sum(self.SEDS[i-1,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
-        LW_n = np.sum(self.SEDS[i,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
+        #LW_p = np.sum(self.SEDS[i-1,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
+        #LW_n = np.sum(self.SEDS[i,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
+
+        LWs_all = np.sum(self.SEDS[0:10,:, 911:1107], axis=2)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
+        LW_s = np.sum(LWs_all, axis=1)
+        s = splrep(metal[:10], LW_s, k=5, s=5)
+        LW_final = BSpline(*s)(metal)
 
         #for i in range(self.ages-1):
         #    LW_p[i] = simps(np.array(SEDp[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
         #    LW_n[i] = simps(np.array(SEDn[i][911:1107]), wv_LW) * self.SFH[i] * (self.ag[i+1]- self.ag[i])
 
-        FLW_p = np.sum(LW_p)
-        FLW_n = np.sum(LW_n)
+        #FLW_p = np.sum(LW_p)
+        #FLW_n = np.sum(LW_n)
 
-        LW_final = np.interp(metal, [met_prev, met_next], [FLW_p, FLW_n])
+        #LW_final = np.interp(metal, [met_prev, met_next], [FLW_p, FLW_n])
         
         return LW_final
 
@@ -367,16 +384,21 @@ class bpass_loader:
         #nion_p = np.zeros(self.ages - 1)
         #nion_n = np.zeros(self.ages - 1)
 
-        nion_p = np.sum(self.SEDS[i-1,:, :912] /(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
-        nion_n = np.sum(self.SEDS[i,:, :912] / (6.626 * 1e-27 * wv_to_freq(wv_nion)), axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
+        nion_all = np.sum(self.SEDS[0:10,:, :912]/(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=2) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
+        nion_s = np.sum(nion_all, axis=1)
+        s = splrep(metal[:10], nion_s, k=5, s=5)
+        nion_final = BSpline(*s)(metal)
+
+        #nion_p = np.sum(self.SEDS[i-1,:, :912] /(6.626 * 1e-27 * wv_to_freq(wv_nion)),  axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
+        #nion_n = np.sum(self.SEDS[i,:, :912] / (6.626 * 1e-27 * wv_to_freq(wv_nion)), axis=1) * self.SFH * (self.ag[1:]-self.ag[:-1]) * 3.826 * 1e33
         #for i in range(self.ages - 1):
         #    nion_p[i] = np.sum(np.array(SEDp[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i]) * 3.826 * 1e33
         #    nion_n[i] = np.sum(np.array(SEDn[i][:912]) / (6.626 * 1e-27 * wv_to_freq(wv_nion))) *self.SFH[i] * (self.ag[i + 1] - self.ag[i]) * 3.826 * 1e33
 
-        nion_p_tot = np.sum(nion_p)
-        nion_n_tot = np.sum(nion_n)
+        #nion_p_tot = np.sum(nion_p)
+        #nion_n_tot = np.sum(nion_n)
 
-        nion_final = np.interp(metal, [met_prev, met_next], [nion_p_tot, nion_n_tot])
+        #nion_final = np.interp(metal, [met_prev, met_next], [nion_p_tot, nion_n_tot])
 
         return nion_final
 

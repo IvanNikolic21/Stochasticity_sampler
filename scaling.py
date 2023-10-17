@@ -207,8 +207,10 @@ def sigma_metalicity_const():
 def OH_to_mass_fraction(Z_OH):
     """
     Convert 12+log(O/H) metalicty to mass fraction one.
+    Very important note! So far I haven't accounted for solar metallicity being
+    0.02!
     """
-    return 10**(Z_OH - 8.69)
+    return 10**(Z_OH - 8.69) * 0.02
 
 def DeltaZ_z(z):
     """
