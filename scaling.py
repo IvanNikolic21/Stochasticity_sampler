@@ -62,6 +62,17 @@ def sigma_SFR_constant():
     """
     return 0.5 / np.log(10)
 
+
+def sigma_SFR_Hassan():
+    """
+        Get scatter from Hassan+21.
+    Returns
+    -------
+        sigma_SRF: float,
+            sigma from Hassan+21.
+    """
+    return 0.3
+
 def sigma_SFR_variable(Mstar):
     """
         Variable scatter of SFR-Mstar relation.

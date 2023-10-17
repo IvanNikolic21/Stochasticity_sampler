@@ -1,6 +1,6 @@
-"""Driver of the sampler fro x-ray, UV and LW.
+"""Driver of the sampler for x-ray, UV and LW.
 
-Paramerers are gonna be:
+Parameters are going to be:
 wavelength -> possible options are 'X', 'UV' and 'LW' (uppercase)
 z_init
 z_end
@@ -59,6 +59,8 @@ if __name__=='__main__':
     parser.add_argument("--use_previous_run", action=argparse.BooleanOptionalAction)
 
     parser.add_argument("--shift_scaling", action=argparse.BooleanOptionalAction)
+
+    parser.add_argument("--literature_run", type=str, default='None')
 
     inputs = parser.parse_args()
     assert inputs.control_run!= True or inputs.use_previous_run!=True, "Not compatible combination"
@@ -309,6 +311,7 @@ if __name__=='__main__':
                                                        'SFH_samp' : SFH_samp,
                                                        'iter_num' : iter_num,
                                                        'shift_scaling' : shift_scaling,
+                                                       'litarature_run' : inputs.literature_run,
                                          })
                                  #        callback=saving_function,
                         #                 error_callback = error_function,
