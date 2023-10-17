@@ -194,7 +194,7 @@ def Sampler_ALL(emissivities_x_list,
                 direc = '/home/inikolic/projects/stochasticity/_cache'
             )
         elif get_previous:
-            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_bigz.h5','r') as f_prev:
+            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_bigz_R10.h5','r') as f_prev:
                 print("Is this proc number okay?", str(float(proc_number)), "for z=", str(z), "and this iter", str(float(iter_num)))
                 delta_bias = f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))].attrs['delta']
                 if delta_bias == 0.0:
