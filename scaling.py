@@ -1,11 +1,12 @@
-"""Temporary file that includes all of the scaling laws."""
+"""Temporary file that includes all the scaling laws."""
 
 
 from astropy.cosmology import Planck18 as cosmo
 import numpy as np
 from astropy import units as u
 
-def sfr_ms_mh_21cmmc(z,get_stellar_mass = True):
+
+def sfr_ms_mh_21cmmc(z, get_stellar_mass=True):
     """
         Get scaling relations for SFR-Mh or SFR-Mstar and Mstar-Mh from 21cmmc.
         Parameters
@@ -27,24 +28,24 @@ def sfr_ms_mh_21cmmc(z,get_stellar_mass = True):
     else:
         return a_SFR, b_stellar_mass + b_SFR
 
-def ms_mh_21cmmc():
+
+def ms_mh_flattening(mh):
     """
-        Get scaling relations for SFR-Mh or SFR-Mstar and Mstar-Mh from 21cmmc.
+        Get scaling relations for SHMR based on Davies+in prep.
         Parameters
         ----------
-        z: float,
-            redshift at which scaling laws are evaluated. Important for
-            SFR - M_stellar or SFR - M_halo relation.
-        get_stellar_mass: boolean; optional,
-            if True, two scaling laws are produced: SFR - M_stellar and
-            M_stellar - M_halo. Else, only SFR - M_halo relation is returned.
+        mh: float,
+            halo mass at which we're evaluating the relation.
+        Returns
+        ----------
+        ms_mean: floats; optional,
+            a and b coefficient of the relation.
     """
-    a_stellar_mass = 1.5
-    b_stellar_mass = np.log10(0.0076) - 5
+    f_star_mean = 0.0076 * (2.6e11 / 1e10) ** 0.5
+    f_star_mean /= (mh / 2.6e11) ** -0.5 + (mh / 2.6e11) ** 0.61
+    return f_star_mean * mh
 
 
-    return  a_stellar_mass, b_stellar_mass
-    
 def sigma_SHMR_constant():
     """
         Get scatter of the SHMR relation. Constant as per discussion.

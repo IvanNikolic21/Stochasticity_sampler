@@ -30,16 +30,16 @@ from multiprocessing import Pool, Manager
 from save import saving_function
 import datetime
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--wavelength", type=str, default='all')
     parser.add_argument("--z_init", type=float, default=5.0)
-    parser.add_argument("--z_end", type=float, default = 20.0)
-    parser.add_argument("--z_steps", type=int, default = 10)
-    parser.add_argument("--dlog10m", type=float, default = 0.01)
-    parser.add_argument("--N_iter", type=int, default = 100)
-    parser.add_argument("--n_processes", type=int, default = 1)
+    parser.add_argument("--z_end", type=float, default=20.0)
+    parser.add_argument("--z_steps", type=int, default=10)
+    parser.add_argument("--dlog10m", type=float, default=0.01)
+    parser.add_argument("--N_iter", type=int, default=100)
+    parser.add_argument("--n_processes", type=int, default=1)
 
     parser.add_argument("--no_SFR_sampling", action=argparse.BooleanOptionalAction)
     parser.add_argument("--no_emiss_sampling", action=argparse.BooleanOptionalAction)
@@ -56,6 +56,7 @@ if __name__=='__main__':
     parser.add_argument("--shift_scaling", action=argparse.BooleanOptionalAction)
 
     parser.add_argument("--literature_run", type=str, default='None')
+    parser.add_argument("--flattening", action=argparse.BooleanOptionalAction, default=True)
 
     inputs = parser.parse_args()
     assert inputs.control_run!= True or inputs.use_previous_run!=True, "Not compatible combination"
@@ -307,6 +308,7 @@ if __name__=='__main__':
                                                        'iter_num': iter_num,
                                                        'shift_scaling': shift_scaling,
                                                        'literature_run': inputs.literature_run,
+                                                       'flattening': inputs.flattening
                                          })
                                  #        callback=saving_function,
                         #                 error_callback = error_function,

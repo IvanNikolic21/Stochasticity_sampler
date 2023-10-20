@@ -3,7 +3,7 @@ import os
 from hmf import integrate_hmf as ig_hmf
 from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant
 from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
-from scaling import sigma_Lx_const
+from scaling import sigma_Lx_const, ms_mh_flattening
 from scaling import sigma_SFR_variable, DeltaZ_z, sigma_SFR_Hassan
 from chmf import chmf
 from common_stuff import _sample_halos
@@ -15,10 +15,10 @@ import time
 import h5py
 
 
-class Sampler_Output:
+class SamplerOutput:
     """
         Class that contains all the information from the simulation. It's
-        directly passed to the saver algorithm and it's accessed directly
+        directly passed to the saver algorithm, and it's accessed directly
         throughout the code. It's main parameter is the overdensity.
     """
 
@@ -57,6 +57,7 @@ def Sampler_ALL(emissivities_x_list,
                 iter_num = 0,
                 shift_scaling = False,
                 literature_run = None,
+                flattening = True,
            ):
     M_turn = 5*10**8  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
@@ -145,7 +146,7 @@ def Sampler_ALL(emissivities_x_list,
             else:
                 delta_bias = density_inst
 
-            class_int = Sampler_Output(delta_bias)
+            class_int = SamplerOutput(delta_bias)
             setattr(class_int, 'filename', filename)
             setattr(class_int, 'redshift', z)
 
@@ -201,7 +202,7 @@ def Sampler_ALL(emissivities_x_list,
                 delta_bias = f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))].attrs['delta']
                 if delta_bias == 0.0:
                     delta_bias = 9.0 + np.random.random() #random delta_bias hack
-                class_int = Sampler_Output(delta_bias)
+                class_int = SamplerOutput(delta_bias)
                 setattr(class_int, 'filename', filename)
                 setattr(class_int, 'redshift', z)
                 mhs = np.array(f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))]['Mh'])
@@ -260,7 +261,10 @@ def Sampler_ALL(emissivities_x_list,
                     if sample_emiss:
                         #find a_Lx
                         #find a_SFR
-                        Ms_mean = 10 ** (a_Ms * logm + b_Ms)
+                        if flattening:
+                            Ms_mean = ms_mh_flattening(mass)
+                        else:
+                            Ms_mean = 10 ** (a_Ms * logm + b_Ms)
                         SFR_mean = 10 ** (a_SFR * np.log10(Ms_mean) + b_SFR)
                         Z_mean = metalicity_from_FMR(Ms_mean, SFR_mean)
                         a_Lx_mean, b_Lx_mean =  Lx_SFR(Z_mean)
@@ -274,7 +278,10 @@ def Sampler_ALL(emissivities_x_list,
                         fct = np.log(10) * 0.5 * sMs**2
                     else:
                         fct = 0.0
-                    Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms - fct), sMs))
+                    if flattening:
+                        Ms_sample = 10**(np.random.normal(ms_mh_flattening(mass), sMs))
+                    else:
+                        Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms - fct), sMs))
                     logmstar = np.log10(Ms_sample)
                     if literature_run=='Hassan21':
                         sSFR = sigma_SFR_Hassan()
@@ -294,7 +301,10 @@ def Sampler_ALL(emissivities_x_list,
                     else:
                         fct = 0.0
                     #b_Ms -= np.log(10) * sMs ** 2 / 2
-                    Ms_sample = 10**(normal((a_Ms*logm + b_Ms - fct), sMs))
+                    if flattening:
+                        Ms_sample = 10**(np.random.normal(ms_mh_flattening(mass), sMs))
+                    else:
+                        Ms_sample = 10**(normal((a_Ms*logm + b_Ms - fct), sMs))
                     logmstar = np.log10(Ms_sample)
                     
                     SFR_samp = 10**(a_SFR * logmstar + b_SFR)
@@ -304,7 +314,10 @@ def Sampler_ALL(emissivities_x_list,
                     #                            z,
                     #                            get_stellar_mass = False,
                     #                        )
-                    Ms_sample = 10**(a_Ms * logm + b_Ms)
+                    if flattening:
+                        Ms_sample = ms_mh_flattening(mass)
+                    else:
+                        Ms_sample = 10**(a_Ms * logm + b_Ms)
                     if literature_run=='Hassan21':
                         sSFR = sigma_SFR_Hassan()
                     else:
@@ -321,7 +334,10 @@ def Sampler_ALL(emissivities_x_list,
                     #                            z,
                     #                            get_stellar_mass = False,
                     #                        )
-                    Ms_sample = 10 ** (a_Ms * logm + b_Ms)
+                    if flattening:
+                        Ms_sample = ms_mh_flattening(mass)
+                    else:
+                        Ms_sample = 10 ** (a_Ms * logm + b_Ms)
                     SFR_samp = 10**(a_SFR * logm + b_SFR)
             time_for_stellar_mass = time.time()
             #print("Getting stellar mass took:", time_for_stellar_mass - time_3, flush=True)
