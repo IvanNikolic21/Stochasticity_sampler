@@ -23,7 +23,7 @@ def wv_to_freq(wvs):
             wavelengths in Angstroms.
     Output:
         freq: scalar of ndarray-like.
-            frequencies in Herz.
+            frequencies in Hertz.
     """
 
     return const.c.cgs.value / (wvs * 1e-8)
@@ -35,10 +35,14 @@ def reader(name):
     """
     return open(name).read().split('\n')
 
+
 def splitter(fp):
-    """Function that splits SEDs. Useful for parallelizing."""
+    """Function that splits SEDs. Useful for parallelling."""
     wv_b = int(1e5)
-    return [[float(fp[i].split()[j]) for i in range(wv_b)] for j in range(1,52)]
+    return [
+        [float(fp[i].split()[j]) for i in range(wv_b)] for j in range(1, 52)
+    ]
+
 
 class bpass_loader:
     """
@@ -321,7 +325,7 @@ class bpass_loader:
         #LW_p = np.sum(self.SEDS[i-1,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
         #LW_n = np.sum(self.SEDS[i,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
 
-        LWs_all = np.sum(self.SEDS[0:10,:, 911:1107], axis=2)/196 * self.SFH[np.newaxis,:] * (self.ag[1:]-self.ag[:-1])[np.newaixs,:]
+        LWs_all = np.sum(self.SEDS[0:10,:, 911:1107], axis=2)/196 * self.SFH[np.newaxis,:] * (self.ag[1:]-self.ag[:-1])[np.newaxis,:]
         LW_s = np.sum(LWs_all, axis=1)
         s = splrep(self.metal_avail[:10], LW_s, k=5, s=5)
         LW_final = float(BSpline(*s)(metal))
