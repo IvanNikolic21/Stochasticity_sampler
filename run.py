@@ -18,7 +18,7 @@ log10_Mmin -> default
 mass_binning -> default
 """
 import argparse
-from sampler_all import Sampler_ALL
+from sampler_all import sampler_all_func
 from bpass_read import bpass_loader
 from common_stuff import SFH_sampler, _sample_densities
 from chmf import chmf
@@ -280,7 +280,7 @@ if __name__ == '__main__':
                         #for proc in psutil.process_iter():
                         #    print(proc.open_files())
                         #assert 1==0, "at least got here"
-                        results = [pool.apply_async(Sampler_ALL,
+                        results = [pool.apply_async(sampler_all_func,
                                                    kwds = {
                                                        'emissivities_x_list': emissivities_x,
                                                        'emissivities_lw_list': emissivities_lw,

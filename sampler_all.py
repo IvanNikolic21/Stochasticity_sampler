@@ -26,7 +26,7 @@ class SamplerOutput:
         self.delta = delta
 
 
-def Sampler_ALL(emissivities_x_list,
+def sampler_all_func(emissivities_x_list,
                 emissivities_lw_list,
                 emissivities_uv_list,
                 z=10,
@@ -279,7 +279,7 @@ def Sampler_ALL(emissivities_x_list,
                     else:
                         fct = 0.0
                     if flattening:
-                        Ms_sample = 10**(np.random.normal(ms_mh_flattening(mass), sMs))
+                        Ms_sample = 10**(np.random.normal(np.log10(ms_mh_flattening(mass)), sMs))
                     else:
                         Ms_sample = 10**(np.random.normal((a_Ms*logm + b_Ms - fct), sMs))
                     logmstar = np.log10(Ms_sample)
@@ -302,7 +302,7 @@ def Sampler_ALL(emissivities_x_list,
                         fct = 0.0
                     #b_Ms -= np.log(10) * sMs ** 2 / 2
                     if flattening:
-                        Ms_sample = 10**(np.random.normal(ms_mh_flattening(mass), sMs))
+                        Ms_sample = 10**(np.log10(np.random.normal(ms_mh_flattening(mass)), sMs))
                     else:
                         Ms_sample = 10**(normal((a_Ms*logm + b_Ms - fct), sMs))
                     logmstar = np.log10(Ms_sample)
