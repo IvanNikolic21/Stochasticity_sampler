@@ -41,25 +41,52 @@ if __name__ == '__main__':
     parser.add_argument("--N_iter", type=int, default=100)
     parser.add_argument("--n_processes", type=int, default=1)
 
-    parser.add_argument("--no_SFR_sampling", action=argparse.BooleanOptionalAction)
-    parser.add_argument("--no_emiss_sampling", action=argparse.BooleanOptionalAction)
-    parser.add_argument("--no_Poiss_sampling",  action=argparse.BooleanOptionalAction)
-    parser.add_argument("--no_met_sampling",  action=argparse.BooleanOptionalAction)
-    parser.add_argument("--no_Mstar_sampling", action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        "--no_SFR_sampling",
+        action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument(
+        "--no_emiss_sampling",
+        action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument(
+        "--no_Poiss_sampling",
+        action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument(
+        "--no_met_sampling",
+        action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument(
+        "--no_Mstar_sampling",
+        action=argparse.BooleanOptionalAction
+    )
 
     parser.add_argument("--R_bias", type=float, default=5.0)
     parser.add_argument("--f_esc_option", type=str, default='binary')
 
     parser.add_argument("--control_run", action=argparse.BooleanOptionalAction)
-    parser.add_argument("--use_previous_run", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--use_previous_run", type=str, default='False')
 
     parser.add_argument("--shift_scaling", action=argparse.BooleanOptionalAction)
 
     parser.add_argument("--literature_run", type=str, default='None')
-    parser.add_argument("--flattening", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--flattening",
+        action=argparse.BooleanOptionalAction,
+        default=True
+    )
 
     inputs = parser.parse_args()
-    assert inputs.control_run!= True or inputs.use_previous_run!=True, "Not compatible combination"
+    assert inputs.control_run!= True or inputs.use_previous_run=='False', "Not compatible combination"
+
+    assert inputs.use_previous_run in [
+        'False',
+        'bigz',
+        'bigger',
+        'lowz',
+        'bigz_noPo'
+    ], "No cache file for this compination"
 
     if inputs.no_SFR_sampling:
         sample_SFR = False
@@ -156,7 +183,7 @@ if __name__ == '__main__':
         f.close()
 
         SFH_samp = SFH_sampler(z)
-        if not inputs.control_run and not inputs.use_previous_run:
+        if not inputs.control_run and inputs.use_previous_run=='False':
             delta_list = _sample_densities(z,
                                            inputs.N_iter * inputs.n_processes,
                                            5.0,

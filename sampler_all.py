@@ -26,39 +26,41 @@ class SamplerOutput:
         self.delta = delta
 
 
-def sampler_all_func(emissivities_x_list,
-                emissivities_lw_list,
-                emissivities_uv_list,
-                z=10,
-                delta_bias = 0.0,
-                R_bias=5.0,
-                log10_Mmin = 5,
-                log10_Mmax = 15,
-                dlog10m = 0.01,
-                N_iter = 1000,
-                sample_hmf = True,
-                sample_densities = True, 
-                sample_SFR = True,
-                sample_emiss = True,
-                sample_met = True,
-                calculate_2pcc = False,     #2pcc correction to # of halos.
-                duty_cycle = True,          #whether to turn of duty cycle.
-                sample_Mstar = True,
-                mass_binning = False,     #bin halo mass fucntion
-                f_esc_option = 'binary', #f_esc distribution option
-                bpass_read = None,
-                filename = None,
-                control_run = False,
-                proc_number = 0,
-                get_previous = False,
-                density_inst = None,
-                hmf_this = None,
-                SFH_samp = None,
-                iter_num = 0,
-                shift_scaling = False,
-                literature_run = None,
-                flattening = True,
-           ):
+def sampler_all_func(
+        emissivities_x_list,
+        emissivities_lw_list,
+        emissivities_uv_list,
+        z=10,
+        delta_bias=0.0,
+        R_bias=5.0,
+        log10_Mmin=5,
+        log10_Mmax=15,
+        dlog10m=0.01,
+        N_iter=1000,
+        sample_hmf=True,
+        sample_densities=True,
+        sample_SFR=True,
+        sample_emiss=True,
+        sample_met=True,
+        calculate_2pcc = False,     #2pcc correction to # of halos.
+        duty_cycle=True,          #whether to turn of duty cycle.
+        sample_Mstar=True,
+        mass_binning=False,     #bin halo mass fucntion
+        f_esc_option='binary', #f_esc distribution option
+        bpass_read=None,
+        filename=None,
+        control_run=False,
+        proc_number=0,
+        get_previous=False,
+        density_inst=None,
+        hmf_this=None,
+        SFH_samp=None,
+        iter_num=0,
+        shift_scaling=False,
+        literature_run=None,
+        flattening=True,
+):
+
     M_turn = 5*10**8  #Park+19 parametrization
     V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
     #SFH_samp = SFH_sampler(z)
@@ -94,7 +96,7 @@ def sampler_all_func(emissivities_x_list,
     #     hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
     #     hmf_this.prep_collapsed_fractions(check_cache=True)
     
-    elif not sample_densities and not control_run and not get_previous:
+    elif not sample_densities and not control_run and get_previous=='False':
 
         if delta_bias==0.0:
             hmf_this = hmf.MassFunction(z = z, 
@@ -138,7 +140,7 @@ def sampler_all_func(emissivities_x_list,
     for i in range(N_iter):
         #assert i>0, "start iterations"
         start = time.time()
-        if sample_densities and not control_run and not get_previous:
+        if sample_densities and not control_run and get_previous=='False':
 
             #new 06/04/23: this is Lagrangian density at z=z going into chmf.
             if hasattr(density_inst, '__len__'):
@@ -196,8 +198,8 @@ def sampler_all_func(emissivities_x_list,
                 z,
                 direc = '/home/inikolic/projects/stochasticity/_cache'
             )
-        elif get_previous:
-            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_bigz.h5','r') as f_prev:
+        elif get_previous!='False':
+            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_'+get_previous+'.h5','r') as f_prev:
                 print("Is this proc number okay?", str(float(proc_number)), "for z=", str(z), "and this iter", str(float(iter_num)))
                 delta_bias = f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))].attrs['delta']
                 if delta_bias == 0.0:
@@ -223,12 +225,12 @@ def sampler_all_func(emissivities_x_list,
                 mhs[ind] = np.interp(rand, np.flip(N_cs_norm), np.flip(masses))
         
         masses_saved = []
-        if duty_cycle and not control_run and not get_previous:
+        if duty_cycle and not control_run and get_previous=='False':
             for index, mass in enumerate(mhs):
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
                     masses_saved.append(mass)
             len_mass = len(masses_saved)
-        elif control_run or get_previous:
+        elif control_run or get_previous!='False':
             masses_saved = mhs #duty cycle already applied
             len_mass = len(masses_saved)
 
