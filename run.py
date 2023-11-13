@@ -319,7 +319,7 @@ if __name__ == '__main__':
                                                        'z': z,
                                                        'dlog10m': inputs.dlog10m,
                                                        'N_iter': iter_per_par,
-                                                       'R_bias': inputs.R_bias,
+                                                       'r_bias': inputs.R_bias,
                                                        'log10_Mmin': 5.0,
                                                        'mass_binning': 1,
                                                        'sample_hmf': sample_Poiss,

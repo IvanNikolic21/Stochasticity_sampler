@@ -32,7 +32,7 @@ def sampler_all_func(
         emissivities_uv_list,
         z=10,
         delta_bias=0.0,
-        R_bias=5.0,
+        r_bias=5.0,
         log10_Mmin=5,
         log10_Mmax=15,
         dlog10m=0.01,
@@ -62,7 +62,7 @@ def sampler_all_func(
 ):
 
     M_turn = 5*10**8  #Park+19 parametrization
-    V_bias = 4.0 / 3.0  * np.pi * R_bias ** 3
+    V_bias = 4.0 / 3.0  * np.pi * r_bias ** 3
     #SFH_samp = SFH_sampler(z)
     ########################INITIALIZE SOME SCALING LAWS########################
     np.random.seed(seed = (os.getpid() * int(time.time()) % 123456789))
@@ -113,7 +113,7 @@ def sampler_all_func(
                                                       mass_density=True)
 
         else:
-            hmf_this = chmf(z=z, delta_bias = delta_bias, R_bias = R_bias)
+            hmf_this = chmf(z=z, delta_bias = delta_bias, R_bias = r_bias)
             hmf_this.prep_for_hmf(log10_Mmin, log10_Mmax, dlog10m)
             masses, mass_func = hmf_this.run_hmf(delta_bias)
 
@@ -235,7 +235,7 @@ def sampler_all_func(
             len_mass = len(masses_saved)
 
         #container.add_halo_masses(np.array(masses_saved))
-        setattr(class_int, 'halo_masses', np.array(masses_saved))
+        setattr(class_int, 'halo_masses', np.array(mhs))
         Mstar_samples = np.zeros(shape = len_mass)
         metalicity_samples = np.zeros(shape = len_mass)
         SFR_samples = np.zeros(shape = len_mass)
