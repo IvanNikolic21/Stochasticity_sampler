@@ -85,7 +85,11 @@ if __name__ == '__main__':
         'bigz',
         'bigger',
         'lowz',
-        'bigz_noPo'
+        'bigz_noPo',
+        'bigz_noPo_new',
+        'lowz_noPo',
+        'bigger_noPo',
+        'biggestz'
     ], "No cache file for this compination"
 
     if inputs.no_SFR_sampling:
