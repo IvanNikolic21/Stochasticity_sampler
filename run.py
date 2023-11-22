@@ -322,7 +322,7 @@ if __name__ == '__main__':
                                                        'dlog10m': inputs.dlog10m,
                                                        'N_iter': iter_per_par,
                                                        'r_bias': inputs.R_bias,
-                                                       'log10_Mmin': 5.0,
+                                                       'log10_m_min': 5.0,
                                                        'mass_binning': 1,
                                                        'sample_hmf': sample_Poiss,
                                                        'sample_SFR': sample_SFR,
