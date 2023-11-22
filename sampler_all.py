@@ -33,7 +33,7 @@ def sampler_all_func(
         z=10,
         delta_bias=0.0,
         r_bias=5.0,
-        log10_Mmin=5,
+        log10_m_min=5,
         log10_Mmax=15,
         dlog10m=0.01,
         N_iter=1000,
@@ -94,13 +94,12 @@ def sampler_all_func(
     #     #np.savetxt('/home/inikolic/projects/stochasticity/samples/density{}.txt'.format(z), np.array(delta_list))
     #     hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = R_bias)
     #     hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
-    #     hmf_this.prep_collapsed_fractions(check_cache=True)
-    
+
     elif not sample_densities and not control_run and get_previous=='False':
 
         if delta_bias==0.0:
             hmf_this = hmf.MassFunction(z = z, 
-                                        Mmin = log10_Mmin, 
+                                        Mmin=log10_m_min,
                                         Mmax = log10_Mmax, 
                                         dlog10m = dlog10m)
             mass_func = hmf_this.dndm 
@@ -113,8 +112,8 @@ def sampler_all_func(
                                                       mass_density=True)
 
         else:
-            hmf_this = chmf(z=z, delta_bias = delta_bias, R_bias = r_bias)
-            hmf_this.prep_for_hmf(log10_Mmin, log10_Mmax, dlog10m)
+            hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = r_bias)
+            hmf_this.prep_for_hmf(log10_m_min, log10_Mmax, dlog10m)
             masses, mass_func = hmf_this.run_hmf(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
@@ -225,13 +224,13 @@ def sampler_all_func(
                 mhs[ind] = np.interp(rand, np.flip(N_cs_norm), np.flip(masses))
         
         masses_saved = []
-        if duty_cycle and not control_run and get_previous=='False':
+        if duty_cycle and not control_run and get_previous == 'bigz2':
             for index, mass in enumerate(mhs):
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
                     masses_saved.append(mass)
             len_mass = len(masses_saved)
-        elif control_run or get_previous!='False':
-            masses_saved = mhs #duty cycle already applied
+        elif control_run or get_previous!='False' or get_previous != 'bigz2':
+            masses_saved = mhs # duty cycle already applied
             len_mass = len(masses_saved)
 
         #container.add_halo_masses(np.array(masses_saved))
