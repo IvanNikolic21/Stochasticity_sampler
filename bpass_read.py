@@ -325,7 +325,7 @@ class bpass_loader:
         #LW_p = np.sum(self.SEDS[i-1,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
         #LW_n = np.sum(self.SEDS[i,:, 911:1107], axis=1)/196 * self.SFH * (self.ag[1:]-self.ag[:-1])
 
-        LWs_all = np.sum(self.SEDS[0:10,:, 911:1107], axis=2)/196 * self.SFH[np.newaxis,:] * (self.ag[1:]-self.ag[:-1])[np.newaxis,:]
+        LWs_all = np.sum(self.SEDS[0:10,:, 911:1216], axis=2)/305 * self.SFH[np.newaxis,:] * (self.ag[1:]-self.ag[:-1])[np.newaxis,:]
         LW_s = np.sum(LWs_all, axis=1)
         s = splrep(self.metal_avail[:10], LW_s, k=5, s=5)
         LW_final = float(BSpline(*s)(metal))
