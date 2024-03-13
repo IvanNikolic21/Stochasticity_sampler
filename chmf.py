@@ -3,7 +3,6 @@
 from astropy.cosmology import Planck18 as cosmo
 import numpy as np
 from scipy import integrate
-from astropy import units as u
 import os
 from joblib import Parallel, delayed
 import scipy
@@ -14,16 +13,16 @@ from functools import cached_property
 
 class chmf:
     def z_drag_calculate(self):
-        z_drag = 0.313*(self.omhh**-0.419) * (1 + 0.607*(self.omhh** 0.674));
-        z_drag = 1 + z_drag*(cosmo.Ob0*cosmo.h**2)**(0.238*self.omhh**0.223);
-        z_drag *= 1291 * self.omhh**0.251 / (1 + 0.659*self.omhh**0.828);
+        z_drag = 0.313*(self.omhh**-0.419) * (1 + 0.607*(self.omhh** 0.674))
+        z_drag = 1 + z_drag*(cosmo.Ob0*cosmo.h**2)**(0.238*self.omhh**0.223)
+        z_drag *= 1291 * self.omhh**0.251 / (1 + 0.659*self.omhh**0.828)
         return z_drag
     
     def alpha_nu_calculation(self):
         alpha_nu = (self.f_c/self.f_cb) * (2*(self.p_c+self.p_cb)+5)/(4*self.p_cb+5.0)
-        alpha_nu *= 1 - 0.553*self.f_nub+0.126*(self.f_nub**3);
-        alpha_nu /= 1-0.193*np.sqrt(self.f_nu)+0.169*self.f_nu;
-        alpha_nu *= (1+self.y_d)**(self.p_c-self.p_cb);
+        alpha_nu *= 1 - 0.553*self.f_nub+0.126*(self.f_nub**3)
+        alpha_nu /= 1-0.193*np.sqrt(self.f_nu)+0.169*self.f_nu
+        alpha_nu *= (1+self.y_d)**(self.p_c-self.p_cb)
         alpha_nu *= 1+ (self.p_cb-self.p_c)/2.0 * (1.0+1.0/(4.0*self.p_c+3.0)/(4.0*self.p_cb+7.0))/(1.0+self.y_d)
         return alpha_nu
     
@@ -79,6 +78,7 @@ class chmf:
         self.TFmdmparams_TFm2 = (1.2*(self.f_nu**0.64)*(self.N_nu**(0.3+0.6*self.f_nu)))
         self._dicke = None
         self._sigma_cell = None
+        self._ratio_at_atomic = None
         
     @cached_property
     def dicke(self):
@@ -432,6 +432,24 @@ class chmf:
             np.savetxt('/home/inikolic/projects/stochasticity/_cache/ratios_{}_{}_{:.5f}.txt'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m), self.collapsed_ratios)
         return self.derivative_ratios
 
+    @cached_property
+    def get_ratio_at_atomic(self):
+        """
+            Function returns the ration of collapsed fraction for PS and ST hmfs
+            at the atomic threshold.
+        Returns
+        -------
+
+        """
+        def atomic_thresh():
+            return (10/(1+self.z))**1.5 * 1e8
+
+        if self._ratio_at_atomic is None:
+            f_coll_st = self.f_coll_st(atomic_thresh())
+            f_coll_ps = self.f_coll_calc(atomic_thresh(), remove_delta=True)
+            self._ratio_at_atomic = f_coll_st / f_coll_ps
+        return self._ratio_at_atomic
+
     def ST_hmf(self, delta_inst):
         #self.hmf_ST = np.zeros((len(self.bins)))
         delta = self.Deltac/self.dicke - delta_inst
@@ -452,3 +470,26 @@ class chmf:
         #    else:
         #        self.hmf_ST[index]=0.0
         return self.hmf_ST
+
+    def hmf_coll(self, delta_inst):
+        """
+            Function returns the halo-mass function that is just a scaled
+            version of Press-Schechter hmf with collapsed fraction matching the
+            Sheth-Tormen one.
+        Parameters
+        ----------
+        delta_inst: float
+            overdensity for the current halo mass function
+
+        Returns
+        -------
+
+        """
+        delta = self.Deltac/self.dicke - delta_inst
+        sigma_array = self.sigma_z0_array_st**2 - self.sigma_cell**2
+        self._hmf_coll = self.get_ratio_at_atomic() * -(
+                    self.critical_density * cosmo.Om0) / self.bins / np.sqrt(
+            2 * np.pi) * delta * (sigma_array ** (-1.5)) * \
+                      (np.e ** (-0.5 * delta ** 2 / (
+                          sigma_array))) * self.sigma_derivatives_st
+        return self._hmf_coll
