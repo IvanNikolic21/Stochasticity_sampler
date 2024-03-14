@@ -204,50 +204,18 @@ if __name__ == '__main__':
             # np.savetxt('/home/inikolic/projects/stochasticity/samples/density{}.txt'.format(z), np.array(delta_list))
             hmf_this = chmf(z=z, delta_bias=0.0, R_bias=inputs.R_bias)
             hmf_this.prep_for_hmf_st(5.0, 15.0, 0.01)
-            hmf_this.prep_collapsed_fractions(check_cache=False)
+            #hmf_this.prep_collapsed_fractions(check_cache=False)
         elif not inputs.density_distribution:
             delta_list = np.zeros((inputs.N_iter, inputs.n_processes))
             hmf_this = chmf(z=z, delta_bias=0.0, R_bias=inputs.R_bias)
             hmf_this.prep_for_hmf_st(5.0, 15.0, 0.01)
-            hmf_this.prep_collapsed_fractions(check_cache=False)
+            #hmf_this.prep_collapsed_fractions(check_cache=False)
         else:
             delta_list = np.zeros((inputs.N_iter, inputs.n_processes)) 
             hmf_this = None
         #initialize the h5 file
 
-        # container = HdF5Saver(
-        #     z,
-        #     current_pid,
-        #     '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
-        # )
-        #container.create_file()
-        #container.create_redshift()
-        #container.add_Rbias(R_bias)
-#        Sampler_ALL(emissivities_x_list= [],
- #                   emissivities_lw_list= [],
-  #                  emissivities_uv_list=[],
-   #                 z = z,
-    #                dlog10m = inputs.dlog10m,
-     #               N_iter =  1,
-      #              R_bias = inputs.R_bias,
-       #             log10_Mmin = 5.0,
-        #            mass_binning = 1,
-         #           sample_hmf = sample_Poiss,
-          #          sample_SFR = sample_SFR,
-           #         sample_emiss = sample_emiss,
-            #        sample_met = sample_met,
-             #       bpass_read = bpass_read,
-              #      filename = filename,
-               #     control_run= inputs.control_run,
-                #    f_esc_option = inputs.f_esc_option,
-                 #   proc_number = 1.0,
-                  #  get_previous = inputs.use_previous_run,
-                   # density_inst = delta_list[0, 0],
-                    #hmf_this = hmf_this,
-                    #SFH_samp = SFH_samp,
-                    #iter_num = 0,
 
-                    #)
         #assert 1==0, "Done with this small thingy"
         with Manager() as manager:
             if inputs.wavelength!='all':

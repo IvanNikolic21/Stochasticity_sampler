@@ -34,7 +34,7 @@ def sampler_all_func(
         delta_bias=0.0,
         r_bias=5.0,
         log10_m_min=5,
-        log10_Mmax=15,
+        log10_m_max=15,
         dlog10m=0.01,
         N_iter=1000,
         sample_hmf=True,
@@ -100,7 +100,7 @@ def sampler_all_func(
         if delta_bias==0.0:
             hmf_this = hmf.MassFunction(z = z, 
                                         Mmin=log10_m_min,
-                                        Mmax = log10_Mmax, 
+                                        Mmax = log10_m_max,
                                         dlog10m = dlog10m)
             mass_func = hmf_this.dndm 
             masses = hmf_this.m
@@ -113,7 +113,7 @@ def sampler_all_func(
 
         else:
             hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = r_bias)
-            hmf_this.prep_for_hmf(log10_m_min, log10_Mmax, dlog10m)
+            hmf_this.prep_for_hmf(log10_m_min, log10_m_max, dlog10m)
             masses, mass_func = hmf_this.run_hmf(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
@@ -152,8 +152,7 @@ def sampler_all_func(
             setattr(class_int, 'redshift', z)
 
             masses = hmf_this.bins
-            #print("This is delta inside", delta_bias)
-            mass_func = hmf_this.ST_hmf(delta_bias)
+            mass_func = hmf_this.hmf_coll(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
                 if mass_func_element == 0 or np.isnan(mass_func_element):
@@ -168,7 +167,7 @@ def sampler_all_func(
                 N_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
                                                  mass_func,
                                                  Mmin_temp,
-                                                 log10_Mmax,
+                                                 log10_m_max,
                                                  V_bias,
                                                  mode = 'binning',
                                                  Poisson = sample_hmf,
