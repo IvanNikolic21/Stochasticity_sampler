@@ -1,6 +1,6 @@
 "This piece of code includes only the chmf class."
 
-from astropy.cosmology import Planck18 as cosmo
+from astropy.cosmology import Planck18 as Cosmo
 import numpy as np
 from scipy import integrate
 import os
@@ -14,7 +14,7 @@ from functools import cached_property
 class chmf:
     def z_drag_calculate(self):
         z_drag = 0.313*(self.omhh**-0.419) * (1 + 0.607*(self.omhh** 0.674))
-        z_drag = 1 + z_drag*(cosmo.Ob0*cosmo.h**2)**(0.238*self.omhh**0.223)
+        z_drag = 1 + z_drag*(Cosmo.Ob0*Cosmo.h**2)**(0.238*self.omhh**0.223)
         z_drag *= 1291 * self.omhh**0.251 / (1 + 0.659*self.omhh**0.828)
         return z_drag
     
@@ -28,11 +28,11 @@ class chmf:
     
     def MtoR(self,M):
         if (self.FILTER == 0): ##top hat M = (4/3) PI <rho> R^3
-            return ((3*M/(4*np.pi*cosmo.Om0*self.critical_density))**(1.0/3.0))    
+            return ((3*M/(4*np.pi*Cosmo.Om0*self.critical_density))**(1.0/3.0))
     
     def RtoM(self, R):
         if (self.FILTER == 0):
-            return ((4.0/3.0)*np.pi*R**3*(cosmo.Om0*self.critical_density))
+            return ((4.0/3.0)*np.pi*R**3*(Cosmo.Om0*self.critical_density))
     
     def __init__(self, z, delta_bias, R_bias):
 
@@ -41,33 +41,33 @@ class chmf:
         self.TINY = 10**-30
         self.Deltac = 1.686
         self.FILTER = 0
-        self.T_cmb = cosmo.Tcmb0.value
+        self.T_cmb = Cosmo.Tcmb0.value
         self.theta_cmb = self.T_cmb /2.7
-        self.critical_density = cosmo.critical_density0.value*self.CMperMPC*self.CMperMPC*self.CMperMPC/self.Msun
+        self.critical_density = Cosmo.critical_density0.value*self.CMperMPC*self.CMperMPC*self.CMperMPC/self.Msun
         self.z = z
         self.delta_bias = delta_bias
         self.R_bias = R_bias
-        self.omhh=cosmo.Om0*(cosmo.h)**2
+        self.omhh=Cosmo.Om0*(Cosmo.h)**2
         self.z_equality = 25000*self.omhh*self.theta_cmb**-4 - 1.0
         self.k_equality = 0.0746*self.omhh/(self.theta_cmb**2)
         self.z_drag = self.z_drag_calculate()
         self.y_d = (1 + self.z_equality) / (1.0 + self.z_drag)
-        self.f_nu = cosmo.Onu0 /cosmo.Om0
-        self.f_baryon = cosmo.Ob0 / cosmo.Om0
+        self.f_nu = Cosmo.Onu0 /Cosmo.Om0
+        self.f_baryon = Cosmo.Ob0 / Cosmo.Om0
         self.p_c = -(5 - np.sqrt(1 + 24*(1 - self.f_nu-self.f_baryon)))/4.0
         self.p_cb = -(5 - np.sqrt(1 + 24*(1 - self.f_nu)))/4.0
         self.f_c = 1 - self.f_nu - self.f_baryon
         self.f_cb = 1 - self.f_nu
         self.f_nub = self.f_nu+self.f_baryon
         self.alpha_nu = self.alpha_nu_calculation()
-        self.R_drag = 31.5 * cosmo.Ob0*cosmo.h**2 * (self.theta_cmb**-4) * 1000 / (1.0 + self.z_drag)
-        self.R_equality = 31.5 * cosmo.Ob0*cosmo.h**2 * (self.theta_cmb**-4) * 1000 / (1.0 + self.z_equality)
+        self.R_drag = 31.5 * Cosmo.Ob0*Cosmo.h**2 * (self.theta_cmb**-4) * 1000 / (1.0 + self.z_drag)
+        self.R_equality = 31.5 * Cosmo.Ob0*Cosmo.h**2 * (self.theta_cmb**-4) * 1000 / (1.0 + self.z_equality)
         self.sound_horizon = 2.0/3.0/self.k_equality * np.sqrt(6.0/self.R_equality) *np.log( (np.sqrt(1+self.R_drag) \
                     + np.sqrt(self.R_drag+self.R_equality)) / (1.0 + np.sqrt(self.R_equality)) )
         self.beta_c = 1.0/(1.0-0.949*self.f_nub)
         self.N_nu = (1.0)
         self.POWER_INDEX = 0.9667
-        self.Radius_8 = 8.0/cosmo.h
+        self.Radius_8 = 8.0/Cosmo.h
         self.SIGMA_8 = 0.8159
         self.M_bias = self.RtoM(self.R_bias)
         
@@ -83,9 +83,9 @@ class chmf:
     @cached_property
     def dicke(self):
         if self._dicke is None:
-            OmegaM_z=cosmo.Om(self.z)
+            OmegaM_z=Cosmo.Om(self.z)
             dick_z = 2.5*OmegaM_z / ( 1.0/70.0 + OmegaM_z*(209-OmegaM_z)/140.0 + pow(OmegaM_z, 4.0/7.0) )
-            dick_0 = 2.5*cosmo.Om0 / ( 1.0/70.0 + cosmo.Om0*(209-cosmo.Om0)/140.0 + pow(cosmo.Om0, 4.0/7.0) )
+            dick_0 = 2.5*Cosmo.Om0 / ( 1.0/70.0 + Cosmo.Om0*(209-Cosmo.Om0)/140.0 + pow(Cosmo.Om0, 4.0/7.0) )
             self._dicke = dick_z / (dick_0 * (1.0+self.z))
         return self._dicke
 
@@ -152,7 +152,7 @@ class chmf:
         #    dwdr = 0
         #else:
         dwdr = 9*np.cos(kR)*k/kR**3 + 3*np.sin(kR)*(1 - 3/(kR*kR))/(kR*R)
-        drdm = 1.0 / (4.0*np.pi *cosmo.Om0* self.critical_density * R*R);
+        drdm = 1.0 / (4.0*np.pi *Cosmo.Om0* self.critical_density * R*R);
 
         return k*k*p*2*w*dwdr*drdm;
     
@@ -178,7 +178,7 @@ class chmf:
         sig_o = self.sigma_z0(self.M_bias);
         sig_one = self.sigma_z0(M);
         sigsq = sig_one*sig_one - sig_o*sig_o
-        return -(self.critical_density*cosmo.Om0)/M /np.sqrt(2*np.pi) \
+        return -(self.critical_density*Cosmo.Om0)/M /np.sqrt(2*np.pi) \
             *delta*((sig_one**2 - sig_o**2)**(-1.5))*(np.e**( -0.5*delta**2/(sig_one**2-sig_o**2))) \
             *self.dsigmasqdm_z0(M)
         
@@ -205,7 +205,7 @@ class chmf:
             return 0
         for index, mass in enumerate(self.bins):
             if mass<self.M_bias:
-                self.hmf[index] = -(self.critical_density*cosmo.Om0)/mass/np.sqrt(2*np.pi) * delta * ((sigma_array[index])**(-1.5)) * \
+                self.hmf[index] = -(self.critical_density*Cosmo.Om0)/mass/np.sqrt(2*np.pi) * delta * ((sigma_array[index])**(-1.5)) * \
                                 (np.e**(-0.5*delta**2/(sigma_array[index]))) * self.sigma_derivatives[index]
             else:
                 self.hmf[index] = 0.0
@@ -218,7 +218,7 @@ class chmf:
         delta = self.Deltac/self.dicke
         sig_one = self.sigma_z0(M);
         sigsq = sig_one*sig_one
-        return -(self.critical_density*cosmo.Om0)/M /np.sqrt(2*np.pi) \
+        return -(self.critical_density*Cosmo.Om0)/M /np.sqrt(2*np.pi) \
             *delta*((sig_one**2)**(-1.5))*(np.e**( -0.5*delta**2/(sig_one**2))) \
             *self.dsigmasqdm_z0(M)
 
@@ -319,7 +319,7 @@ class chmf:
         self.SHETH_A = 0.353
         self.SHETH_p = 0.175
         nuhat = np.sqrt(self.SHETH_a) * self.Deltac/sigma
-        return -(self.critical_density*cosmo.Om0)/M * (dsigmadm/sigma) * np.sqrt(2/np.pi) * self.SHETH_A * (1+nuhat**(-2*self.SHETH_p)) * nuhat * np.exp(-nuhat**2/2)
+        return -(self.critical_density*Cosmo.Om0)/M * (dsigmadm/sigma) * np.sqrt(2/np.pi) * self.SHETH_A * (1+nuhat**(-2*self.SHETH_p)) * nuhat * np.exp(-nuhat**2/2)
     
     def dNbiasdM_st(self, M):
         delta = self.Deltac/self.dicke - self.delta_bias
@@ -331,7 +331,7 @@ class chmf:
         self.SHETH_A = 0.353
         self.SHETH_p = 0.175
         nuhat = np.sqrt(self.SHETH_a) * delta/np.sqrt(sigsq)
-        return -(self.critical_density*cosmo.Om0)/M * (dsigmadm/np.sqrt(sigsq)) * np.sqrt(2/np.pi) * self.SHETH_A * (1+nuhat**(-2*self.SHETH_p)) * nuhat * np.exp(-nuhat**2/2)
+        return -(self.critical_density*Cosmo.Om0)/M * (dsigmadm/np.sqrt(sigsq)) * np.sqrt(2/np.pi) * self.SHETH_A * (1+nuhat**(-2*self.SHETH_p)) * nuhat * np.exp(-nuhat**2/2)
     
     def prep_for_hmf_st(self, log10_Mmin = 6, log10_Mmax = 15, dlog10m = 0.01):
         self.log10_Mmin = log10_Mmin
@@ -363,7 +363,7 @@ class chmf:
         
         for index, mass in enumerate(self.bins):
             if mass<self.M_bias:
-                self.hmf_st[index] = -(self.critical_density*cosmo.Om0)/mass/np.sqrt(2/np.pi) *(dsigmadm[index]/np.sqrt(sigma_array[index]))* (nuhat[index])*  \
+                self.hmf_st[index] = -(self.critical_density*Cosmo.Om0)/mass/np.sqrt(2/np.pi) *(dsigmadm[index]/np.sqrt(sigma_array[index]))* (nuhat[index])*  \
                                 self.SHETH_A *(1+(nuhat[index])**(-2*self.SHETH_p)) *(np.e**(-0.5*(nuhat[index])**2))
             else:
                 self.hmf_st[index] = 0.0
@@ -376,7 +376,7 @@ class chmf:
 
     def f_coll_st(self,M):
         f_coll_st = integrate.quad (self.dfdM_st, np.log(M), np.log(10**19), limit=1000, epsabs=10**-10)
-        return f_coll_st[0] / (cosmo.Om0*self.critical_density)
+        return f_coll_st[0] / (Cosmo.Om0*self.critical_density)
     
     def mass_coll_grt_ST(self, delta_bias, mass = None):
         """
@@ -399,7 +399,7 @@ class chmf:
         fraction =  self.f_coll_st(10**mass) / self.f_coll_calc(10**mass)
         s = np.sqrt(2 * (sigma_currmass**2 - self.sigma_cell**2))
         er_f = erfc ((self.Deltac/self.dicke - delta_bias)/ s)
-        return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density * cosmo.Om0
+        return fraction* er_f * 4*np.pi/3*self.R_bias**3 * self.critical_density * Cosmo.Om0
     
     def prep_collapsed_fractions(self, check_cache=True):
         if check_cache and os.path.exists('/home/inikolic/projects/stochasticity/_cache/derivatives_{}_{}_{:.5f}.txt'.format(self.log10_Mmin, self.log10_Mmax, self.dlog10m)):
@@ -457,8 +457,8 @@ class chmf:
         #print("Is hmf the problem?")
         #print("collapsedratios", self.collapsed_ratios[:10], type(self.collapsed_ratios),self.derivative_ratios[:10], type(self.derivative_ratios),self.bins[:10], type(self.bins))
         #print("sigma_array", sigma_array[:10], type(sigma_array))
-        self.hmf_ST = self.collapsed_ratios * -(self.critical_density*cosmo.Om0)/self.bins/np.sqrt(2*np.pi) * delta * ((sigma_array)**(-1.5)) * \
-                                (np.e**(-0.5*delta**2/(sigma_array))) * self.sigma_derivatives_st + self.critical_density*cosmo.Om0 / self.bins * self.derivative_ratios[1:-1] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array)))
+        self.hmf_ST = self.collapsed_ratios * -(self.critical_density*Cosmo.Om0)/self.bins/np.sqrt(2*np.pi) * delta * ((sigma_array)**(-1.5)) * \
+                                (np.e**(-0.5*delta**2/(sigma_array))) * self.sigma_derivatives_st + self.critical_density*Cosmo.Om0 / self.bins * self.derivative_ratios[1:-1] * scipy.special.erfc(delta/(np.sqrt(2*sigma_array)))
         #print("I guess not!")
         #for index,mass in enumerate(self.bins):
         #    if mass<self.M_bias and index<len(self.derivative_ratios):
@@ -487,8 +487,8 @@ class chmf:
         """
         delta = self.Deltac/self.dicke - delta_inst
         sigma_array = self.sigma_z0_array_st**2 - self.sigma_cell**2
-        self._hmf_coll = self.get_ratio_at_atomic() * -(
-                    self.critical_density * cosmo.Om0) / self.bins / np.sqrt(
+        self._hmf_coll = self.get_ratio_at_atomic * -(
+                    self.critical_density * Cosmo.Om0) / self.bins / np.sqrt(
             2 * np.pi) * delta * (sigma_array ** (-1.5)) * \
                       (np.e ** (-0.5 * delta ** 2 / (
                           sigma_array))) * self.sigma_derivatives_st
