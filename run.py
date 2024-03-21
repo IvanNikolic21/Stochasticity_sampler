@@ -96,7 +96,8 @@ if __name__ == '__main__':
         'biggestz',
         'midz',
         'bigz2',
-        'bigger_hmfnew'
+        'bigger_hmfnew',
+        'bigz_hmfnew',
     ], "No cache file for this combination"
 
     if inputs.no_SFR_sampling:
