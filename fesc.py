@@ -1,6 +1,7 @@
 """Here escape fraction lies"""
 
 import numpy as np
+from numpy.random import normal
 
 def fesc_distr(option = 'binary', Mh = None):
     """
@@ -53,5 +54,15 @@ def fesc_distr(option = 'binary', Mh = None):
             return mean_down, sigma_down
         else:
             return mean_up, sigma_up
+    elif option == 'Mascia+23':
+        """
+        This option assumes log-normal distribution whsoe mean is given by
+        Mascia+23 distribution, and with the median set to 0.053
+        """
+
+        mean = 0.053
+        sigma = 0.303
+        f_samp = 10**normal(np.log10(mean) - np.log(10) * 0.5*sigma**2, sigma)
+        return f_samp
     #TBD
         

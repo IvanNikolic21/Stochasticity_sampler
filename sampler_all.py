@@ -483,7 +483,10 @@ def sampler_all_func(
                     f_esc = fesc_distr()
                     F_LyC *= f_esc
                 else:
-                    F_LyC *= 0.053 #constant value
+                    f_esc = fesc_distr(option = 'Mascia+23')
+                    F_LyC *= f_esc #this is new, default option is log-normal
+                    #there's gotta be a better way to do this. But we'll keep it for now
+                    #F_LyC *= 0.053 #constant value
             elif f_esc_option == 'ksz_inference':
                 f_esc, scat = fesc_distr(f_esc_option,mass)
                 if sample_emiss:
