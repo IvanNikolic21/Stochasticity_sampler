@@ -78,8 +78,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "--density_distribution",
-        type=bool,
-        default=True
+        action="store_false"
     )
     inputs = parser.parse_args()
     assert inputs.control_run!= True or inputs.use_previous_run=='False', "Not compatible combination"
