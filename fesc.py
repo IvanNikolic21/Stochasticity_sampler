@@ -64,5 +64,8 @@ def fesc_distr(option = 'binary', Mh = None):
         sigma = 0.303
         f_samp = 10**normal(np.log10(mean) - np.log(10) * 0.5*sigma**2, sigma)
         return f_samp
+
+    elif option == 'mean':
+        return 0.053
     #TBD
         
