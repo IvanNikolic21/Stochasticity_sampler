@@ -98,18 +98,19 @@ def sampler_all_func(
     elif not sample_densities and not control_run and get_previous=='False':
 
         if delta_bias==0.0:
-            hmf_this = hmf.MassFunction(z = z, 
-                                        Mmin=log10_m_min,
-                                        Mmax = log10_m_max,
-                                        dlog10m = dlog10m)
-            mass_func = hmf_this.dndm 
-            masses = hmf_this.m
-            N_mean_cs = ig_hmf.hmf_integral_gtm(masses, 
-                                                mass_func, 
-                                                mass_density=False) * V_bias
-            cumulative_mass = ig_hmf.hmf_integral_gtm(masses, 
-                                                      mass_func, 
-                                                      mass_density=True)
+            pass #this I haven't used for 2 years so I don't think I should be.
+            # hmf_this = hmf.MassFunction(z = z,
+            #                             Mmin=log10_m_min,
+            #                             Mmax = log10_m_max,
+            #                             dlog10m = dlog10m)
+            # mass_func = hmf_this.dndm
+            # masses = hmf_this.m
+            # N_mean_cs = ig_hmf.hmf_integral_gtm(masses,
+            #                                     mass_func,
+            #                                     mass_density=False) * V_bias
+            # cumulative_mass = ig_hmf.hmf_integral_gtm(masses,
+            #                                           mass_func,
+            #                                           mass_density=True)
 
         else:
             hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = r_bias)
