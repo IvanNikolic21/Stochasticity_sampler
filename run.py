@@ -282,7 +282,8 @@ if __name__ == '__main__':
                                                        'iter_num': iter_num,
                                                        'shift_scaling': shift_scaling,
                                                        'literature_run': inputs.literature_run,
-                                                       'flattening': inputs.flattening
+                                                       'flattening': inputs.flattening,
+                                                       'sample_densities': inputs.density_distribution
                                          })
                                  #        callback=saving_function,
                         #                 error_callback = error_function,

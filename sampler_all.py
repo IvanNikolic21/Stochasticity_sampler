@@ -146,8 +146,11 @@ def sampler_all_func(
                 delta_bias = density_inst[i]
             else:
                 delta_bias = density_inst
-
-            class_int = SamplerOutput(delta_bias)
+            if sample_densities:
+                class_int = SamplerOutput(delta_bias)
+            else:
+                random_dens = np.random.random()
+                class_int = SamplerOutput(random_dens)
             setattr(class_int, 'filename', filename)
             setattr(class_int, 'redshift', z)
 
