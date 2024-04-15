@@ -125,8 +125,8 @@ def sampler_all_func(
             N_mean_cs = ig_hmf.hmf_integral_gtm(masses[:index_to_stop], 
                                                 mass_func[:index_to_stop])
 
-        N_mean = int((N_mean_cs)[0])
-        N_cs_normalized = N_mean_cs/N_mean_cs[0]
+        # N_mean = int((N_mean_cs)[0])
+        # N_cs_normalized = N_mean_cs/N_mean_cs[0]
         
     #emissivities_x = np.zeros(shape = int(N_iter))
     #emissivities_lw = np.zeros(shape = int(N_iter))
@@ -140,7 +140,7 @@ def sampler_all_func(
     for i in range(N_iter):
         #assert i>0, "start iterations"
         start = time.time()
-        if sample_densities and not control_run and get_previous=='False':
+        if not control_run and get_previous=='False':
 
             #new 06/04/23: this is Lagrangian density at z=z going into chmf.
             if hasattr(density_inst, '__len__'):
