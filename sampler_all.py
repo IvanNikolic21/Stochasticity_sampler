@@ -163,40 +163,42 @@ def sampler_all_func(
                     break
             masses=masses[:index_to_stop]
             mass_func=mass_func[:index_to_stop]
-            #######################TEMPORARY MINIMUM MASS#######################
-            Mmin_temp = 7.6
+
+            m_min_temp = 7.6
             
-            mass_coll = hmf_this.mass_coll_grt_ST(delta_bias, mass=Mmin_temp)
+            mass_coll = hmf_this.mass_coll_grt_st(delta_bias, mass=m_min_temp)
+
             if mass_binning:
-                N_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
+                n_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
                                                  mass_func,
-                                                 Mmin_temp,
+                                                 m_min_temp,
                                                  log10_m_max,
                                                  V_bias,
-                                                 mode = 'binning',
-                                                 Poisson = sample_hmf,
-                                                 nbins = 2,
-                                                 mass_coll = None,
-                                                 mass_range = None,
-                                                 max_iter = None,
+                                                 mode='mass',
+                                                 Poisson=sample_hmf,
+                                                 mass_coll=mass_coll,
+                                                 max_iter=None,
                                                  )
-                #print(mhs)
-                time_for_halo_sampling = time.time()
-                #    np.savetxt('/home/inikolic/projects/stochasticity/samples/halos{}.txt'.format(delta_bias), np.array(mhs))
-                     #print("Here's one file for you to analyze", flush=True)
-                if np.sum(mhs) < 0.5 *  mass_coll:
-                    #print("minimal temperature", Mmin_temp, "log10_Mmax", log10_Mmax,"mass_binning", mass_binning, "redshift", z)
-                    print( len(masses), sep=", ")
-                    print( len(mass_func), sep=", ")
-                    print(np.sum(mhs),mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
-                    #raise ValueError("For this iteration sampling halos failed")
-                #assert len(mhs) < 1, "only one mass, aborting"
+
+                if np.sum(mhs) < 0.5 * mass_coll:
+                    print(len(masses), sep=", ")
+                    print(len(mass_func), sep=", ")
+                    print(
+                        np.sum(mhs),
+                        mass_coll,
+                        V_bias,
+                        sample_hmf,
+                        "These are the ingredients",
+                        delta_bias,
+                        "and the previous number is delta"
+                    )
+
         elif control_run:
             fake_delta = float(str(iter_num) + str(os.getpid()))
             class_int = Sampler_Output(fake_delta)
             setattr(class_int, 'filename', filename)
             setattr(class_int, 'redshift', z)
-            N_this_iter, mhs = _get_loaded_halos(
+            n_this_iter, mhs = _get_loaded_halos(
                 z,
                 direc = '/home/inikolic/projects/stochasticity/_cache'
             )
@@ -210,19 +212,19 @@ def sampler_all_func(
                 setattr(class_int, 'filename', filename)
                 setattr(class_int, 'redshift', z)
                 mhs = np.array(f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))]['Mh'])
-                N_this_iter = len(mhs)
+                n_this_iter = len(mhs)
                 if len(mhs)==1 and mhs == np.zeros((1,)):
                     mhs = []
-                    N_this_iter = 0
+                    n_this_iter = 0
             #print("Time for mass sampling", time_is_now - time_is_up)
-            N_this_iter = int(N_this_iter)
+            n_this_iter = int(n_this_iter)
         time_2 = time.time()
         #print("Got masses now", time_2 - time_1)
         if not mass_binning:
-            N_this_iter = N_mean
-            masses_of_haloes = np.zeros(shape = N_this_iter)
+            n_this_iter = N_mean
+            masses_of_haloes = np.zeros(shape = n_this_iter)
                             
-            for ind, rn in enumerate(range(N_this_iter)):
+            for ind, rn in enumerate(range(n_this_iter)):
                 rand = np.random.uniform()
                 mhs[ind] = np.interp(rand, np.flip(N_cs_norm), np.flip(masses))
         
