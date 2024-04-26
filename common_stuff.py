@@ -467,9 +467,11 @@ def _sample_halos(
                     m_haloes = np.append(m_haloes, np.interp(rn_new, np.flip(N_cs), np.flip(mx[inds])))
             elif np.log10(np.sum(m_haloes)) > np.log10(mass_coll) - mass_range and np.log10(np.sum(m_haloes)) < np.log10(mass_coll) + mass_range:
                 break
-    print(m_haloes, flush=True)
-    print("I need to know what I'm dealing with", flush=True)
-    m_haloes = np.concatenate(m_haloes)
+
+    try:
+        m_haloes = np.concatenate(m_haloes)
+    except ValueError:
+        pass
     N = len(m_haloes)
     return N, m_haloes
 
