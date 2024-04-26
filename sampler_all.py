@@ -177,7 +177,6 @@ def sampler_all_func(
                                                  mode='mass',
                                                  Poisson=sample_hmf,
                                                  mass_coll=mass_coll,
-                                                 max_iter=None,
                                                  )
 
                 if np.sum(mhs) < 0.5 * mass_coll:
