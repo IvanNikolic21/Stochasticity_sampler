@@ -191,7 +191,12 @@ if __name__ == '__main__':
 
     for index,z in enumerate(np.linspace(inputs.z_init,inputs.z_end,inputs.z_steps)):
         f = h5py.File(filename, 'a')
-        f.create_group(str(z))
+        try:
+            f.create_group(str(z))
+        except ValueError:
+            if dict(f[str(z)].attrs.keys()):
+                print(dict(f[str(z)].attrs.keys()))
+                raise ValueError("Trying to overwrite the file")
         f.close()
 
         SFH_samp = SFH_sampler(z)
