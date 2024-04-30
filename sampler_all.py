@@ -175,7 +175,7 @@ def sampler_all_func(
                                                  V_bias,
                                                  mode='binning',
                                                  Poisson=sample_hmf,
-                                                 n_bins = 2,
+                                                 nbins=2,
                                                  mass_coll=None,
                                                  mass_range=None,
                                                  max_iter=None,
@@ -201,7 +201,7 @@ def sampler_all_func(
             setattr(class_int, 'redshift', z)
             n_this_iter, mhs = _get_loaded_halos(
                 z,
-                direc = '/home/inikolic/projects/stochasticity/_cache'
+                direc='/home/inikolic/projects/stochasticity/_cache'
             )
         elif get_previous!='False':
             with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_'+get_previous+'.h5','r') as f_prev:
