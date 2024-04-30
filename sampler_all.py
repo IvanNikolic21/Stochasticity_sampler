@@ -130,19 +130,18 @@ def sampler_all_func(
         
     #emissivities_x = np.zeros(shape = int(N_iter))
     #emissivities_lw = np.zeros(shape = int(N_iter))
-    #emissivities_uv = np.zeros(shape = int(N_iter))
-    #tot_mass = np.zeros(shape=int(N_iter))
-    time_1 = time.time()
-    #print("First checkpoint, before for loop", time_1 - time_0)
+    # emissivities_uv = np.zeros(shape = int(N_iter))
+    # tot_mass = np.zeros(shape=int(N_iter))
+    # print("First checkpoint, before for loop", time_1 - time_0)
     list_of_outputs = []
 
-    #print("Starting the iteration", flush=True)
+    # print("Starting the iteration", flush=True)
     for i in range(N_iter):
-        #assert i>0, "start iterations"
-        start = time.time()
+        # assert i>0, "start iterations"
+
         if not control_run and get_previous=='False':
 
-            #new 06/04/23: this is Lagrangian density at z=z going into chmf.
+            # new 06/04/23: this is a Lagrangian density at z=z going into chmf.
             if hasattr(density_inst, '__len__'):
                 delta_bias = density_inst[i]
             else:
@@ -174,9 +173,12 @@ def sampler_all_func(
                                                  m_min_temp,
                                                  log10_m_max,
                                                  V_bias,
-                                                 mode='mass',
+                                                 mode='binning',
                                                  Poisson=sample_hmf,
-                                                 mass_coll=mass_coll,
+                                                 n_bins = 2,
+                                                 mass_coll=None,
+                                                 mass_range=None,
+                                                 max_iter=None,
                                                  )
 
                 if np.sum(mhs) < 0.5 * mass_coll:
