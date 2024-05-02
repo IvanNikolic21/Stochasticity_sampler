@@ -166,7 +166,8 @@ def sampler_all_func(
             m_min_temp = 7.6
             
             mass_coll = hmf_this.mass_coll_grt_st(delta_bias, mass=m_min_temp)
-
+            print(m_min_temp, sample_hmf, mass_func, log10_m_max, V_bias)
+            assert False
             if mass_binning:
                 n_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
                                                  mass_func,
