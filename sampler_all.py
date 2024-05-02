@@ -516,10 +516,7 @@ def sampler_all_func(
             L_UV[j] = F_UV
             L_LW[j] = F_LW
             L_LyC[j] = F_LyC
-        print("Checking whether I reach the end of the loop",
-              L_LyC,
-              flush=True)
-        assert False
+
         #M_uv = get_Muv(L_UV, solar_mult=True)
         #UV_lf, _ = get_uvlf(M_uv, Rbias=R_bias)
         setattr(class_int, 'stellar_masses', Mstar_samples)
@@ -557,7 +554,10 @@ def sampler_all_func(
         setattr(class_int, 'SFH', np.array(SFH_array))
 
         list_of_outputs.append(class_int)
-
+        print("Checking whether I reach the end of one iteration",
+              list_of_outpus,
+              flush=True)
+        assert False
         #container.add_SFH(SFH_array)
 
     #    emissivities_x[i] = np.sum(L_X)
