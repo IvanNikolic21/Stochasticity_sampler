@@ -485,9 +485,7 @@ def sampler_all_func(
             #    F_LW *= f_esc
             ###################END OF F_ESC FOR LW##############################
             #######################STAR OF F_ESC FOR UV#########################
-            print("Checking whether I reach the escape fraction", metalicity_samples,
-                  flush=True)
-            assert False
+
             if f_esc_option == 'binary':
                 if sample_emiss:
                     f_esc = fesc_distr()
@@ -513,12 +511,15 @@ def sampler_all_func(
                 else:
                     F_LyC *= 10**f_esc
             SFH_samples.append(bpass_read.SFH)
-
+            print("iteration", j)
             L_X[j] = Lx_sample
             L_UV[j] = F_UV
             L_LW[j] = F_LW
             L_LyC[j] = F_LyC
-
+        print("Checking whether I reach the end of the loop",
+              L_LyC,
+              flush=True)
+        assert False
         #M_uv = get_Muv(L_UV, solar_mult=True)
         #UV_lf, _ = get_uvlf(M_uv, Rbias=R_bias)
         setattr(class_int, 'stellar_masses', Mstar_samples)
