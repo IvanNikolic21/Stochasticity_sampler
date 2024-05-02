@@ -485,7 +485,9 @@ def sampler_all_func(
             #    F_LW *= f_esc
             ###################END OF F_ESC FOR LW##############################
             #######################STAR OF F_ESC FOR UV#########################
-
+            print("Checking whether I reach the escape fraction", metalicity_samples,
+                  flush=True)
+            assert False
             if f_esc_option == 'binary':
                 if sample_emiss:
                     f_esc = fesc_distr()
@@ -571,6 +573,5 @@ def sampler_all_func(
     #container.add_LW(emissivities_lw)
     #container.add_UV(emissivities_uv)
   #  container = None
-    print("Checking whether I reach the end", list_of_outputs, flush=True)
-    assert False
+
     return list_of_outputs
