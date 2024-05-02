@@ -221,7 +221,7 @@ def sampler_all_func(
         time_2 = time.time()
         #print("Got masses now", time_2 - time_1)
 
-        print( n_this_iter, mhs )
+        print( n_this_iter, mhs, flush=True )
         assert False
         if not mass_binning:
             n_this_iter = N_mean
