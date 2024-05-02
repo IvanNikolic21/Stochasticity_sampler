@@ -221,8 +221,7 @@ def sampler_all_func(
         time_2 = time.time()
         #print("Got masses now", time_2 - time_1)
 
-        print( n_this_iter, mhs, flush=True )
-        assert False
+
         if not mass_binning:
             n_this_iter = N_mean
             masses_of_haloes = np.zeros(shape = n_this_iter)
@@ -572,5 +571,6 @@ def sampler_all_func(
     #container.add_LW(emissivities_lw)
     #container.add_UV(emissivities_uv)
   #  container = None
-    #print(list_of_outputs)
+    print("Checking whether I reach the end", list_of_outputs, flush=True)
+    assert False
     return list_of_outputs
