@@ -166,8 +166,6 @@ def sampler_all_func(
             m_min_temp = 7.6
             
             mass_coll = hmf_this.mass_coll_grt_st(delta_bias, mass=m_min_temp)
-            print(m_min_temp, sample_hmf, mass_func, log10_m_max, V_bias)
-            assert False
             if mass_binning:
                 n_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
                                                  mass_func,
@@ -222,6 +220,9 @@ def sampler_all_func(
             n_this_iter = int(n_this_iter)
         time_2 = time.time()
         #print("Got masses now", time_2 - time_1)
+
+        print( n_this_iter, mhs )
+        assert False
         if not mass_binning:
             n_this_iter = N_mean
             masses_of_haloes = np.zeros(shape = n_this_iter)
