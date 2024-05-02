@@ -234,6 +234,9 @@ if __name__ == '__main__':
             processes=[]
             #pool = Pool(inputs.n_processes )
             for iter_num in range(int(inputs.N_iter / iter_per_par)):
+                print("big iter num", iter_num, flush=True)
+                if iter_num>10:
+                    assert False
                 with Pool(processes=inputs.n_processes) as pool:
                 
 

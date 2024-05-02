@@ -556,11 +556,7 @@ def sampler_all_func(
         list_of_outputs.append(class_int)
         print("Number of iteration", i, flush=True)
         #container.add_SFH(SFH_array)
-        if i>100:
-            print("Checking whether I reach the end of hundred iteration",
-                  list_of_outputs,
-                  flush=True)
-            assert False
+
     #    emissivities_x[i] = np.sum(L_X)
     #    emissivities_uv[i] = np.sum(L_UV)
     #    emissivities_lw[i] = np.sum(L_LW)
