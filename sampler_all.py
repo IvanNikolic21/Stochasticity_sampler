@@ -38,11 +38,10 @@ def sampler_all_func(
         dlog10m=0.01,
         N_iter=1000,
         sample_hmf=True,
-        sample_densities=True,
+        sample_dens=True,
         sample_SFR=True,
         sample_emiss=True,
         sample_met=True,
-        calculate_2pcc = False,     #2pcc correction to # of halos.
         duty_cycle=True,          #whether to turn of duty cycle.
         sample_Mstar=True,
         mass_binning=False,     #bin halo mass fucntion
@@ -59,6 +58,7 @@ def sampler_all_func(
         shift_scaling=False,
         literature_run=None,
         flattening=True,
+        mass_sampler='binning',
 ):
 
     M_turn = 5*10**8  #Park+19 parametrization
@@ -82,7 +82,7 @@ def sampler_all_func(
     #     '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
     # )
 
-    if sample_densities and not control_run and not get_previous:
+    if sample_dens and not control_run and not get_previous:
         pass
     #
     #     delta_list = _sample_densities(z,
@@ -95,7 +95,7 @@ def sampler_all_func(
     #     hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = R_bias)
     #     hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
 
-    elif not sample_densities and not control_run and get_previous=='False':
+    elif not sample_dens and not control_run and get_previous=='False':
 
         if delta_bias==0.0:
             pass #this I haven't used for 2 years so I don't think I should be.
@@ -130,19 +130,18 @@ def sampler_all_func(
         
     #emissivities_x = np.zeros(shape = int(N_iter))
     #emissivities_lw = np.zeros(shape = int(N_iter))
-    #emissivities_uv = np.zeros(shape = int(N_iter))
-    #tot_mass = np.zeros(shape=int(N_iter))
-    time_1 = time.time()
-    #print("First checkpoint, before for loop", time_1 - time_0)
+    # emissivities_uv = np.zeros(shape = int(N_iter))
+    # tot_mass = np.zeros(shape=int(N_iter))
+    # print("First checkpoint, before for loop", time_1 - time_0)
     list_of_outputs = []
 
-    #print("Starting the iteration", flush=True)
+    # print("Starting the iteration", flush=True)
     for i in range(N_iter):
-        #assert i>0, "start iterations"
-        start = time.time()
+        # assert i>0, "start iterations"
+
         if not control_run and get_previous=='False':
 
-            #new 06/04/23: this is Lagrangian density at z=z going into chmf.
+            # new 06/04/23: this is a Lagrangian density at z=z going into chmf.
             if hasattr(density_inst, '__len__'):
                 delta_bias = density_inst[i]
             else:
@@ -163,42 +162,45 @@ def sampler_all_func(
                     break
             masses=masses[:index_to_stop]
             mass_func=mass_func[:index_to_stop]
-            #######################TEMPORARY MINIMUM MASS#######################
-            Mmin_temp = 7.6
+
+            m_min_temp = 7.6
             
-            mass_coll = hmf_this.mass_coll_grt_ST(delta_bias, mass=Mmin_temp)
+            mass_coll = hmf_this.mass_coll_grt_st(delta_bias, mass=m_min_temp)
             if mass_binning:
-                N_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
+                n_this_iter, mhs = _sample_halos(masses[:len(mass_func)],
                                                  mass_func,
-                                                 Mmin_temp,
+                                                 m_min_temp,
                                                  log10_m_max,
                                                  V_bias,
-                                                 mode = 'binning',
-                                                 Poisson = sample_hmf,
-                                                 nbins = 2,
-                                                 mass_coll = None,
-                                                 mass_range = None,
-                                                 max_iter = None,
+                                                 mode=mass_sampler,
+                                                 Poisson=sample_hmf,
+                                                 nbins=2,
+                                                 mass_coll=mass_coll,
+                                                 mass_range=None,
+                                                 max_iter=None,
                                                  )
-                #print(mhs)
-                time_for_halo_sampling = time.time()
-                #    np.savetxt('/home/inikolic/projects/stochasticity/samples/halos{}.txt'.format(delta_bias), np.array(mhs))
-                     #print("Here's one file for you to analyze", flush=True)
-                if np.sum(mhs) < 0.5 *  mass_coll:
-                    #print("minimal temperature", Mmin_temp, "log10_Mmax", log10_Mmax,"mass_binning", mass_binning, "redshift", z)
-                    print( len(masses), sep=", ")
-                    print( len(mass_func), sep=", ")
-                    print(np.sum(mhs),mass_coll, V_bias, sample_hmf, "These are the ingredients", delta_bias, "and the previous number is delta")
-                    #raise ValueError("For this iteration sampling halos failed")
-                #assert len(mhs) < 1, "only one mass, aborting"
+
+                if np.sum(mhs) < 0.5 * mass_coll:
+                    print(len(masses), sep=", ")
+                    print(len(mass_func), sep=", ")
+                    print(
+                        np.sum(mhs),
+                        mass_coll,
+                        V_bias,
+                        sample_hmf,
+                        "These are the ingredients",
+                        delta_bias,
+                        "and the previous number is delta"
+                    )
+
         elif control_run:
             fake_delta = float(str(iter_num) + str(os.getpid()))
             class_int = Sampler_Output(fake_delta)
             setattr(class_int, 'filename', filename)
             setattr(class_int, 'redshift', z)
-            N_this_iter, mhs = _get_loaded_halos(
+            n_this_iter, mhs = _get_loaded_halos(
                 z,
-                direc = '/home/inikolic/projects/stochasticity/_cache'
+                direc='/home/inikolic/projects/stochasticity/_cache'
             )
         elif get_previous!='False':
             with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_'+get_previous+'.h5','r') as f_prev:
@@ -210,19 +212,21 @@ def sampler_all_func(
                 setattr(class_int, 'filename', filename)
                 setattr(class_int, 'redshift', z)
                 mhs = np.array(f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))]['Mh'])
-                N_this_iter = len(mhs)
+                n_this_iter = len(mhs)
                 if len(mhs)==1 and mhs == np.zeros((1,)):
                     mhs = []
-                    N_this_iter = 0
+                    n_this_iter = 0
             #print("Time for mass sampling", time_is_now - time_is_up)
-            N_this_iter = int(N_this_iter)
+            n_this_iter = int(n_this_iter)
         time_2 = time.time()
         #print("Got masses now", time_2 - time_1)
+
+
         if not mass_binning:
-            N_this_iter = N_mean
-            masses_of_haloes = np.zeros(shape = N_this_iter)
+            n_this_iter = N_mean
+            masses_of_haloes = np.zeros(shape = n_this_iter)
                             
-            for ind, rn in enumerate(range(N_this_iter)):
+            for ind, rn in enumerate(range(n_this_iter)):
                 rand = np.random.uniform()
                 mhs[ind] = np.interp(rand, np.flip(N_cs_norm), np.flip(masses))
         
@@ -507,7 +511,6 @@ def sampler_all_func(
                 else:
                     F_LyC *= 10**f_esc
             SFH_samples.append(bpass_read.SFH)
-
             L_X[j] = Lx_sample
             L_UV[j] = F_UV
             L_LW[j] = F_LW
@@ -550,7 +553,6 @@ def sampler_all_func(
         setattr(class_int, 'SFH', np.array(SFH_array))
 
         list_of_outputs.append(class_int)
-
         #container.add_SFH(SFH_array)
 
     #    emissivities_x[i] = np.sum(L_X)
@@ -567,5 +569,5 @@ def sampler_all_func(
     #container.add_LW(emissivities_lw)
     #container.add_UV(emissivities_uv)
   #  container = None
-    #print(list_of_outputs)
+
     return list_of_outputs

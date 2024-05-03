@@ -308,9 +308,63 @@ class chmf:
         t = 1.0/(1.0+0.5*q)
         self.f_coll = t*np.exp(-q**2 - 1.2655122+t*(1.0000237+t*(0.374092+t*(0.0967842+t*(-0.1862881+t*(0.2788681+t*(-1.13520398+t*(1.4885159+t*(-0.82215223+t*0.17087277)))))))))
         return self.f_coll
+
+    def f_coll_calc_cond(self, M, delta_now): #collapsed fraction of halos above mass M
+        delta = self.Deltac/self.dicke - delta_now
+        sigma_bias = np.sqrt(self.sigma_z0(M)**2 - self.sigma_cell**2)
+
+        q = abs(delta/np.sqrt(2)/sigma_bias)
+        t = 1.0/(1.0+0.5*q)
+        f_coll_now = t*np.exp(
+            -q**2 - 1.2655122+t*(
+                1.0000237+t*(
+                    0.374092+t*(
+                        0.0967842+t*(
+                            -0.1862881+t*(
+                                0.2788681+t*(
+                                    -1.13520398+t*(
+                                        1.4885159+t*(-0.82215223+t*0.17087277)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        return f_coll_now
         
-    def mass_coll_grt(self):
-        return self.f_coll_calc(10**self.log10_Mmin) * 4*np.pi/3*self.R_bias**3 * self.critical_density #* (1+self.delta_bias)
+    def mass_coll_grt(self, delta_now=None, min_mass=None):
+        """
+            Function calculates collapsed mass above a given mass for
+            Press-Shether halo-mass function. Potentially it does it for the
+            conditional one with the keyword 'delta_now'
+        Parameters
+        ----------
+        delta_now:
+            Conditional overdensity. If it's calculated for the unconditional
+            one, it's None
+        min_mass:
+            halo mass for which the collapsed mass is calculated. If None, take
+            the minimum from the halo mass function. Has to be in log-units.
+        Returns
+        -------
+        mass_grt_M
+            collapsed mass greater than the one specified by log10_Mmin
+        """
+        if min_mass is not None:
+            min_mass_in = 10**min_mass
+        else:
+            min_mass_in = 10**self.log10_Mmin
+
+        if delta_now is None:
+            return self.f_coll_calc(
+                min_mass_in
+            ) * 4*np.pi/3*self.R_bias**3 * self.critical_density
+        else:
+            return self.f_coll_calc_cond(
+                min_mass_in, delta_now
+            ) * 4*np.pi/3*self.R_bias**3 * self.critical_density
     
     def dNdM_st(self, M):
         sigma = self.sigma_z0(M) * self.dicke
@@ -378,7 +432,7 @@ class chmf:
         f_coll_st = integrate.quad (self.dfdM_st, np.log(M), np.log(10**19), limit=1000, epsabs=10**-10)
         return f_coll_st[0] / (Cosmo.Om0*self.critical_density)
     
-    def mass_coll_grt_ST(self, delta_bias, mass = None):
+    def mass_coll_grt_st(self, delta_bias, mass = None):
         """
             Modified collapsed fraction to be in line with the modified hmf.
 
