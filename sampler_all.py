@@ -177,7 +177,6 @@ def sampler_all_func(
                                                  nbins=2,
                                                  mass_coll=mass_coll,
                                                  mass_range=None,
-                                                 max_iter=None,
                                                  )
 
                 if np.sum(mhs) < 0.5 * mass_coll:
@@ -202,18 +201,42 @@ def sampler_all_func(
                 z,
                 direc='/home/inikolic/projects/stochasticity/_cache'
             )
-        elif get_previous!='False':
-            with h5py.File('/home/inikolic/projects/stochasticity/_cache/Mh_'+get_previous+'.h5','r') as f_prev:
-                print("Is this proc number okay?", str(float(proc_number)), "for z=", str(z), "and this iter", str(float(iter_num)))
-                delta_bias = f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))].attrs['delta']
+        elif get_previous != 'False':
+            with h5py.File(
+                    '/home/inikolic/projects/stochasticity/_cache/Mh_'+get_previous+'.h5',
+                    'r'
+            ) as f_prev:
+                print(
+                    "Is this proc number okay?",
+                    str(float(proc_number)),
+                    "for z=",
+                    str(z),
+                    "and this iter",
+                    str(float(iter_num))
+                )
+                delta_bias = f_prev[
+                    str(z)
+                ][
+                    str(float(proc_number))
+                ][
+                    str(float(iter_num * N_iter + i))
+                ].attrs['delta']
                 if delta_bias == 0.0:
-                    delta_bias = 9.0 + np.random.random() #random delta_bias hack
+                    delta_bias = 9.0 + np.random.random() #random delta_bias
                 class_int = SamplerOutput(delta_bias)
                 setattr(class_int, 'filename', filename)
                 setattr(class_int, 'redshift', z)
-                mhs = np.array(f_prev[str(z)][str(float(proc_number))][str(float(iter_num * N_iter + i))]['Mh'])
+                mhs = np.array(
+                    f_prev[
+                        str(z)
+                    ][
+                        str(float(proc_number))
+                    ][
+                        str(float(iter_num * N_iter + i))
+                    ]['Mh']
+                )
                 n_this_iter = len(mhs)
-                if len(mhs)==1 and mhs == np.zeros((1,)):
+                if len(mhs) == 1 and mhs == np.zeros((1,)):
                     mhs = []
                     n_this_iter = 0
             #print("Time for mass sampling", time_is_now - time_is_up)
