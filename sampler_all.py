@@ -38,11 +38,10 @@ def sampler_all_func(
         dlog10m=0.01,
         N_iter=1000,
         sample_hmf=True,
-        sample_densities=True,
+        sample_dens=True,
         sample_SFR=True,
         sample_emiss=True,
         sample_met=True,
-        calculate_2pcc = False,     #2pcc correction to # of halos.
         duty_cycle=True,          #whether to turn of duty cycle.
         sample_Mstar=True,
         mass_binning=False,     #bin halo mass fucntion
@@ -59,6 +58,7 @@ def sampler_all_func(
         shift_scaling=False,
         literature_run=None,
         flattening=True,
+        mass_sampler='binning',
 ):
 
     M_turn = 5*10**8  #Park+19 parametrization
@@ -82,7 +82,7 @@ def sampler_all_func(
     #     '/home/inikolic/projects/stochasticity/samples/dir_080323/full/'
     # )
 
-    if sample_densities and not control_run and not get_previous:
+    if sample_dens and not control_run and not get_previous:
         pass
     #
     #     delta_list = _sample_densities(z,
@@ -95,7 +95,7 @@ def sampler_all_func(
     #     hmf_this = chmf(z=z, delta_bias=delta_bias, R_bias = R_bias)
     #     hmf_this.prep_for_hmf_st(log10_Mmin, log10_Mmax, dlog10m)
 
-    elif not sample_densities and not control_run and get_previous=='False':
+    elif not sample_dens and not control_run and get_previous=='False':
 
         if delta_bias==0.0:
             pass #this I haven't used for 2 years so I don't think I should be.
@@ -172,10 +172,10 @@ def sampler_all_func(
                                                  m_min_temp,
                                                  log10_m_max,
                                                  V_bias,
-                                                 mode='binning',
+                                                 mode=mass_sampler,
                                                  Poisson=sample_hmf,
                                                  nbins=2,
-                                                 mass_coll=None,
+                                                 mass_coll=mass_coll,
                                                  mass_range=None,
                                                  max_iter=None,
                                                  )
@@ -511,7 +511,6 @@ def sampler_all_func(
                 else:
                     F_LyC *= 10**f_esc
             SFH_samples.append(bpass_read.SFH)
-            print("iteration", j)
             L_X[j] = Lx_sample
             L_UV[j] = F_UV
             L_LW[j] = F_LW
@@ -554,7 +553,6 @@ def sampler_all_func(
         setattr(class_int, 'SFH', np.array(SFH_array))
 
         list_of_outputs.append(class_int)
-        print("Number of iteration", i, flush=True)
         #container.add_SFH(SFH_array)
 
     #    emissivities_x[i] = np.sum(L_X)
