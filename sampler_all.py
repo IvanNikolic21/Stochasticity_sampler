@@ -146,7 +146,7 @@ def sampler_all_func(
                 delta_bias = density_inst[i]
             else:
                 delta_bias = density_inst
-            if sample_densities:
+            if sample_dens:
                 class_int = SamplerOutput(delta_bias)
             else:
                 random_dens = np.random.random()
