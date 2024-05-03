@@ -118,26 +118,13 @@ def sampler_all_func(
             masses, mass_func = hmf_this.run_hmf(delta_bias)
 
             for index_to_stop, mass_func_element in enumerate(mass_func):
-                if mass_func_element==0 or np.isnan(mass_func_element):
+                if mass_func_element == 0 or np.isnan(mass_func_element):
                     break
-            masses=masses[:index_to_stop]
-            mass_func=mass_func[:index_to_stop]
-            N_mean_cs = ig_hmf.hmf_integral_gtm(masses[:index_to_stop], 
-                                                mass_func[:index_to_stop])
+            masses = masses[:index_to_stop]
 
-        # N_mean = int((N_mean_cs)[0])
-        # N_cs_normalized = N_mean_cs/N_mean_cs[0]
-        
-    #emissivities_x = np.zeros(shape = int(N_iter))
-    #emissivities_lw = np.zeros(shape = int(N_iter))
-    # emissivities_uv = np.zeros(shape = int(N_iter))
-    # tot_mass = np.zeros(shape=int(N_iter))
-    # print("First checkpoint, before for loop", time_1 - time_0)
     list_of_outputs = []
 
-    # print("Starting the iteration", flush=True)
     for i in range(N_iter):
-        # assert i>0, "start iterations"
 
         if not control_run and get_previous=='False':
 
@@ -160,8 +147,8 @@ def sampler_all_func(
             for index_to_stop, mass_func_element in enumerate(mass_func):
                 if mass_func_element == 0 or np.isnan(mass_func_element):
                     break
-            masses=masses[:index_to_stop]
-            mass_func=mass_func[:index_to_stop]
+            masses = masses[:index_to_stop]
+            mass_func = mass_func[:index_to_stop]
 
             m_min_temp = 7.6
             
@@ -176,7 +163,6 @@ def sampler_all_func(
                                                  Poisson=sample_hmf,
                                                  nbins=2,
                                                  mass_coll=mass_coll,
-                                                 mass_range=None,
                                                  )
 
                 if np.sum(mhs) < 0.5 * mass_coll:
