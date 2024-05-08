@@ -103,6 +103,7 @@ if __name__ == '__main__':
         'bigger_hmfnew',
         'bigz_hmfnew',
         'lowz_hmfnew',
+        'bigger_ms1',
     ], "No cache file for this combination"
 
     if inputs.no_SFR_sampling:
