@@ -507,6 +507,7 @@ def sampler_all_func(
             elif f_esc_option == 'Mascia+23':
                 if sample_emiss:
                     f_esc = fesc_distr(option='Masica+23')
+                    print(f_esc, F_LyC)
                     F_LyC *= f_esc
                 else:
                     f_esc = fesc_distr(option='mean')
