@@ -18,8 +18,7 @@ def fesc_distr(option = 'binary', Mh = None):
         Returns
         ----------
     """
-    print(option, flush=True)
-    
+
     if option == 'binary':
         return np.random.binomial(1, 0.053) #maximum variance.
     elif option == 'ksz_inference':
@@ -60,11 +59,9 @@ def fesc_distr(option = 'binary', Mh = None):
         This option assumes log-normal distribution whsoe mean is given by
         Mascia+23 distribution, and with the median set to 0.053
         """
-        print("inside the function", flush=True)
         mean = 0.053
         sigma = 0.303
         f_samp = 10**normal(np.log10(mean) - np.log(10) * 0.5*sigma**2, sigma)
-        print(f_samp, flush=True)
         return f_samp
 
     elif option == 'mean':
