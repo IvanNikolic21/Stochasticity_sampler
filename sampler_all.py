@@ -1,9 +1,9 @@
 """"Contains sampler of all three things at the same time"""
 import os
 from hmf import integrate_hmf as ig_hmf
-from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant
+from scaling import sfr_ms_mh_21cmmc, sigma_SHMR_constant, OH_to_mass_fraction
 from scaling import metalicity_from_FMR, sigma_metalicity_const, Lx_SFR
-from scaling import sigma_Lx_const, ms_mh_flattening
+from scaling import sigma_Lx_const, ms_mh_flattening, Lx_SFR_Davies
 from scaling import sigma_SFR_variable, DeltaZ_z, sigma_SFR_Hassan
 from chmf import chmf
 from common_stuff import _sample_halos
@@ -232,12 +232,7 @@ def sampler_all_func(
 
 
         if not mass_binning:
-            n_this_iter = N_mean
-            masses_of_haloes = np.zeros(shape = n_this_iter)
-                            
-            for ind, rn in enumerate(range(n_this_iter)):
-                rand = np.random.uniform()
-                mhs[ind] = np.interp(rand, np.flip(N_cs_norm), np.flip(masses))
+            raise ValueError("This is not implemented anymore!")
         
         masses_saved = []
         if duty_cycle and not control_run and (
@@ -374,14 +369,18 @@ def sampler_all_func(
                     logsfr = np.log10(SFR_samp)
 
                     #a_Lx, b_Lx = Brorby_lx(Z_sample)
-                    a_Lx, b_Lx = Lx_SFR(Z_sample)
+                    metal_sample = OH_to_mass_fraction(Z_sample)
+
+                    metal_sample = metal_sample / 10 ** 0.42 / 0.02 #in units of solar
+
+                    Lx_mean = Lx_SFR_Davies(metal_sample) * SFR_samp
                     sigma_Lx = sigma_Lx_const()
                     #b_Lx -= np.log(10) * sigma_Lx**2 / 2   #shift to median
                     if shift_scaling:
                         fct = np.log(10) * 0.5 * sigma_Lx**2
                     else:
                         fct = 0.0
-                    Lx_sample = 10**normal(a_Lx * logsfr + b_Lx-fct,sigma_Lx)
+                    Lx_sample = 10**normal(np.log10(Lx_mean)-fct,sigma_Lx)
                     #print("Currently SFR and stellar mass", logsfr, logmstar, "Metalicity is this", Z_sample, "and finally Lx", np.log10(Lx_sample))
                 else:
                     logsfr = np.log10(SFR_samp)
@@ -392,8 +391,12 @@ def sampler_all_func(
 
                     Z_sample = normal(Z_mean, sigma_Z)
 
-                    a_Lx, b_Lx = Lx_SFR(Z_sample)
-                    Lx_sample = 10**(a_Lx*logsfr+b_Lx)
+                    metal_sample = OH_to_mass_fraction(Z_sample)
+
+                    metal_sample = metal_sample / 10 ** 0.42 / 0.02  # in units of solar
+
+                    Lx_sample = Lx_SFR_Davies(metal_sample) * SFR_samp
+
             else:
                 if sample_emiss:
                     #a_Ms, b_Ms = ms_mh_21cmmc()
@@ -402,14 +405,19 @@ def sampler_all_func(
                     Z_mean = metalicity_from_FMR(Ms_sample, SFR_samp)
                     Z_mean += DeltaZ_z(z)
                     Z_sample = Z_mean
-                    a_Lx, b_Lx = Lx_SFR(Z_mean)
+
+                    metal_sample = OH_to_mass_fraction(Z_sample)
+
+                    metal_sample = metal_sample / 10 ** 0.42 / 0.02  # in units of solar
+
+                    Lx_mean = Lx_SFR_Davies(metal_sample) * SFR_samp
                     sigma_Lx = sigma_Lx_const()
                     #b_Lx -= np.log(10) * sigma_Lx**2 / 2
                     if shift_scaling:
                         fct = np.log(10) * 0.5 * sigma_Lx**2
                     else:
                         fct = 0.0
-                    Lx_sample = 10**normal(a_Lx * logsfr + b_Lx-fct,sigma_Lx)
+                    Lx_sample = 10**normal(np.log10(Lx_mean)-fct,sigma_Lx)
                 
                 else:
                     #a_Ms, b_Ms = ms_mh_21cmmc()
@@ -418,8 +426,13 @@ def sampler_all_func(
                     Z_mean = metalicity_from_FMR(Ms_sample, SFR_samp)
                     Z_mean += DeltaZ_z(z)
                     Z_sample = Z_mean
-                    a_Lx, b_Lx = Lx_SFR(Z_mean)
-                    Lx_sample = 10**(a_Lx * logsfr + b_Lx)
+
+                    metal_sample = OH_to_mass_fraction(Z_sample)
+
+                    metal_sample = metal_sample / 10 ** 0.42 / 0.02  # in units of solar
+
+                    Lx_sample = Lx_SFR_Davies(metal_sample) * SFR_samp
+
             time_to_get_X = time.time()
             #print("Time it took to get X-rays", time_to_get_X - time_for_stellar_mass, flush=True)
             #######################END OF LX PART###############################

@@ -124,7 +124,7 @@ def Brorby_lx(Z=None):
         sigma_Lx = 0.25
         return a_Lx, b_Lx
 
-def Lx_SFR(Z = None):
+def Lx_SFR_Davies(Z = None):
     """
         Get scaling law for Lx - SFR relation, based on Lehmer+20.
         Parameters
@@ -134,9 +134,22 @@ def Lx_SFR(Z = None):
         Returns
         ----------
     """
+    Z_r = Z / 0.05
+    return 10 ** 40.5 / ((Z_r) ** 0.64 + 1)
+
+def Lx_SFR(Z = None):
+    """
+        Get scaling law for Lx - SFR relation, based on Davies+in prep.
+        Parameters
+        ----------
+        Z: float,
+            metalicity.
+        Returns
+        ----------
+    """
     a_Lx = -0.106 * Z + 2.304
     b_Lx = -0.312 * Z + 41.775
-    return a_Lx, b_Lx   
+    return a_Lx, b_Lx
 
 def sigma_Lx_const():
     """
