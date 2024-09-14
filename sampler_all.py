@@ -236,7 +236,7 @@ def sampler_all_func(
         
         masses_saved = []
         if duty_cycle and not control_run and (
-                get_previous == 'bigz2' or get_previous == 'False' or get_previous[-6:] == 'hmfnew' or get_previous[-3:] == 'ms1'
+                get_previous == 'bigz2' or get_previous == 'False' or get_previous[-6:] == 'hmfnew' or get_previous[-3:] == 'ms1' or get_previous[-11:] == 'hmfnew_noPo'
         ):
             for index, mass in enumerate(mhs):
                 if np.random.binomial(1, np.exp(-M_turn/mass)):
